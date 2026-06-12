@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "crm_insurance_provider"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "ef215477-962c-a6ab-45ac-fdb09b6a0452"
+  }
+}

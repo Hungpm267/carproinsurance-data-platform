@@ -1,0 +1,47 @@
+table DimMonth
+	lineageTag: 2595bbbd-8971-491a-ac26-d427877cb082
+
+	column month_number
+		formatString: 0
+		lineageTag: ab3fd2a7-8eac-4ac4-a5da-f5ddc4598ef1
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [month_number]
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_name_short
+		lineageTag: 838b8e6e-9b61-47cd-bc98-7a49aa6686fc
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [month_name_short]
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_sort
+		formatString: 0
+		lineageTag: 4a65ad41-d7e8-4102-a9b9-b0ddf0195d55
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [month_sort]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimMonth = calculated
+		mode: import
+		source =
+				
+				DATATABLE (
+				    "month_number",     INTEGER,
+				    "month_name_short", STRING,
+				    "month_sort",       INTEGER,
+				    {
+				        { 1,  "Jan", 1  }, { 2,  "Feb", 2  }, { 3,  "Mar", 3  },
+				        { 4,  "Apr", 4  }, { 5,  "May", 5  }, { 6,  "Jun", 6  },
+				        { 7,  "Jul", 7  }, { 8,  "Aug", 8  }, { 9,  "Sep", 9  },
+				        { 10, "Oct", 10 }, { 11, "Nov", 11 }, { 12, "Dec", 12 }
+				    }
+				)
+
+	annotation PBI_Id = f5f6395177fc4d13a04fe171999442be
+

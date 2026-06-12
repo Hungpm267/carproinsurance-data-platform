@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "Insurance_Dashboard"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "61b5a432-f6e1-a44e-4790-c7bd0c975261"
+  }
+}

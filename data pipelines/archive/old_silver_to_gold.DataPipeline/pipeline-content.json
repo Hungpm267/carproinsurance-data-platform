@@ -1,0 +1,1047 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "name": "Lookup config",
+        "type": "Lookup",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "Start pipeline",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "source": {
+            "type": "LakehouseTableSource"
+          },
+          "firstRowOnly": false,
+          "datasetSettings": {
+            "annotations": [],
+            "linkedService": {
+              "name": "insurance_lakehouse",
+              "properties": {
+                "annotations": [],
+                "type": "Lakehouse",
+                "typeProperties": {
+                  "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+                  "artifactId": "0aa0a14b-3288-4f9f-93d1-d888edaf7070",
+                  "rootFolder": "Tables"
+                }
+              }
+            },
+            "type": "LakehouseTable",
+            "schema": [],
+            "typeProperties": {
+              "schema": "meta",
+              "table": "etl_transform_config"
+            }
+          }
+        }
+      },
+      {
+        "name": "ForEach Dimension",
+        "type": "ForEach",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "Filter dim",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "items": {
+            "value": "@activity('Filter dim').output.value",
+            "type": "Expression"
+          },
+          "isSequential": false,
+          "batchCount": 4,
+          "activities": [
+            {
+              "name": "dynamic dim",
+              "type": "TridentNotebook",
+              "dependsOn": [
+                {
+                  "activity": "Lookup log_id",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 3,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "notebookId": {
+                  "value": "@item().notebook_id",
+                  "type": "Expression"
+                },
+                "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+                "sessionTag": "dim_session"
+              }
+            },
+            {
+              "name": "Fail in ForEach Dim",
+              "type": "Fail",
+              "dependsOn": [
+                {
+                  "activity": "End failed table",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "typeProperties": {
+                "message": {
+                  "value": "@activity('dynamic dim').Error.Message",
+                  "type": "Expression"
+                },
+                "errorCode": "TRANSFORM_ERROR "
+              }
+            },
+            {
+              "name": "End Table",
+              "type": "SqlServerStoredProcedure",
+              "dependsOn": [
+                {
+                  "activity": "dynamic dim",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 3,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "storedProcedureName": "[meta].[usp_etl_log]",
+                "storedProcedureParameters": {
+                  "action": {
+                    "value": "entity_success",
+                    "type": "String"
+                  },
+                  "log_id": {
+                    "value": {
+                      "value": "@activity('Lookup log_id').output.firstRow.log_id",
+                      "type": "Expression"
+                    },
+                    "type": "Int64"
+                  },
+                  "rows_inserted": {
+                    "value": {
+                      "value": "@json(activity('dynamic dim').output.result.exitValue).rows_inserted",
+                      "type": "Expression"
+                    },
+                    "type": "Int64"
+                  },
+                  "rows_read": {
+                    "value": {
+                      "value": "@json(activity('dynamic dim').output.result.exitValue).rows_read",
+                      "type": "Expression"
+                    },
+                    "type": "Int64"
+                  },
+                  "pipeline_run_id": {
+                    "value": {
+                      "value": "@pipeline().RunId",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "pipeline_name": {
+                    "value": {
+                      "value": "@item().pipeline_name",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  }
+                }
+              },
+              "linkedService": {
+                "name": "insurance_warehouse",
+                "properties": {
+                  "annotations": [],
+                  "type": "DataWarehouse",
+                  "typeProperties": {
+                    "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                    "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                    "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                  }
+                }
+              }
+            },
+            {
+              "name": "End failed table",
+              "type": "SqlServerStoredProcedure",
+              "dependsOn": [
+                {
+                  "activity": "dynamic dim",
+                  "dependencyConditions": [
+                    "Failed"
+                  ]
+                }
+              ],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 2,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "storedProcedureName": "[meta].[usp_etl_log]",
+                "storedProcedureParameters": {
+                  "action": {
+                    "value": "entity_failed",
+                    "type": "String"
+                  },
+                  "controller_id": {
+                    "value": {
+                      "value": "@item().transform_config_id",
+                      "type": "Expression"
+                    },
+                    "type": "Int64"
+                  },
+                  "log_id": {
+                    "value": {
+                      "value": "@activity('Lookup log_id').output.firstRow.log_id",
+                      "type": "Expression"
+                    },
+                    "type": "Int64"
+                  },
+                  "pipeline_name": {
+                    "value": {
+                      "value": "@item().pipeline_name",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "pipeline_run_id": {
+                    "value": {
+                      "value": "@pipeline().RunId",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "target_table": {
+                    "value": {
+                      "value": "@concat(item().target_schema,'.',item().target_table)",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "error_message": {
+                    "value": {
+                      "value": "@activity('dynamic dim').error.message",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  }
+                }
+              },
+              "linkedService": {
+                "name": "insurance_warehouse",
+                "properties": {
+                  "annotations": [],
+                  "type": "DataWarehouse",
+                  "typeProperties": {
+                    "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                    "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                    "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                  }
+                }
+              }
+            },
+            {
+              "name": "Lookup log_id",
+              "type": "Lookup",
+              "dependsOn": [],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "source": {
+                  "type": "DataWarehouseSource",
+                  "sqlReaderStoredProcedureName": "[meta].[usp_etl_log]",
+                  "storedProcedureParameters": {
+                    "action": {
+                      "type": "String",
+                      "value": "pipeline_start"
+                    },
+                    "controller_id": {
+                      "type": "Int64",
+                      "value": {
+                        "value": "@item().transform_config_id",
+                        "type": "Expression"
+                      }
+                    },
+                    "pipeline_name": {
+                      "type": "String",
+                      "value": {
+                        "value": "@item().pipeline_name",
+                        "type": "Expression"
+                      }
+                    },
+                    "pipeline_run_id": {
+                      "type": "String",
+                      "value": {
+                        "value": "@pipeline().RunId",
+                        "type": "Expression"
+                      }
+                    }
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "datasetSettings": {
+                  "annotations": [],
+                  "linkedService": {
+                    "name": "insurance_warehouse",
+                    "properties": {
+                      "annotations": [],
+                      "type": "DataWarehouse",
+                      "typeProperties": {
+                        "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                        "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                        "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                      }
+                    }
+                  },
+                  "type": "DataWarehouseTable",
+                  "schema": [],
+                  "typeProperties": {}
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "Filter dim",
+        "type": "Filter",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "Lookup config",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "items": {
+            "value": "@activity('Lookup config').output.value",
+            "type": "Expression"
+          },
+          "condition": {
+            "value": "@startswith(item().target_table, 'dim_')",
+            "type": "Expression"
+          }
+        }
+      },
+      {
+        "name": "ForEach Fact",
+        "type": "ForEach",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "Filter fact",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
+          {
+            "activity": "ForEach Dimension",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "items": {
+            "value": "@activity('Filter fact').output.value",
+            "type": "Expression"
+          },
+          "isSequential": false,
+          "batchCount": 3,
+          "activities": [
+            {
+              "name": "dynamic fact",
+              "type": "TridentNotebook",
+              "dependsOn": [
+                {
+                  "activity": "Lookup log_id in fact",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 3,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "notebookId": {
+                  "value": "@item().notebook_id",
+                  "type": "Expression"
+                },
+                "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+                "parameters": {
+                  "last_watermark": {
+                    "value": {
+                      "value": "@item().last_watermark",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "watermark_column": {
+                    "value": {
+                      "value": "@item().watermark_column",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "controller_id": {
+                    "value": {
+                      "value": "@item().transform_config_id",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  }
+                },
+                "sessionTag": "fact_session"
+              }
+            },
+            {
+              "name": "Fail in ForEach Fact",
+              "type": "Fail",
+              "dependsOn": [
+                {
+                  "activity": "End failed table in fact",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "typeProperties": {
+                "message": {
+                  "value": "@activity('dynamic fact').Error.Message",
+                  "type": "Expression"
+                },
+                "errorCode": "TRANSFORM_ERROR "
+              }
+            },
+            {
+              "name": "End Table in fact",
+              "type": "SqlServerStoredProcedure",
+              "dependsOn": [
+                {
+                  "activity": "dynamic fact",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 2,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "storedProcedureName": "[meta].[usp_etl_log]",
+                "storedProcedureParameters": {
+                  "action": {
+                    "value": "entity_success",
+                    "type": "String"
+                  },
+                  "log_id": {
+                    "value": {
+                      "value": "@activity('Lookup log_id in fact').output.firstRow.log_id",
+                      "type": "Expression"
+                    },
+                    "type": "Int64"
+                  },
+                  "rows_inserted": {
+                    "value": {
+                      "value": "@json(activity('dynamic fact').output.result.exitValue).rows_inserted",
+                      "type": "Expression"
+                    },
+                    "type": "Int64"
+                  },
+                  "rows_read": {
+                    "value": {
+                      "value": "@json(activity('dynamic fact').output.result.exitValue).rows_read",
+                      "type": "Expression"
+                    },
+                    "type": "Int64"
+                  },
+                  "watermark_from": {
+                    "value": {
+                      "value": "@json(activity('dynamic fact').output.result.exitValue).watermark_from",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "watermark_to": {
+                    "value": {
+                      "value": "@json(activity('dynamic fact').output.result.exitValue).watermark_to",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "pipeline_run_id": {
+                    "value": {
+                      "value": "@pipeline().RunId",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "pipeline_name": {
+                    "value": {
+                      "value": "@item().pipeline_name",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  }
+                }
+              },
+              "linkedService": {
+                "name": "insurance_warehouse",
+                "properties": {
+                  "annotations": [],
+                  "type": "DataWarehouse",
+                  "typeProperties": {
+                    "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                    "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                    "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                  }
+                }
+              }
+            },
+            {
+              "name": "End failed table in fact",
+              "type": "SqlServerStoredProcedure",
+              "dependsOn": [
+                {
+                  "activity": "dynamic fact",
+                  "dependencyConditions": [
+                    "Failed"
+                  ]
+                }
+              ],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 2,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "storedProcedureName": "[meta].[usp_etl_log]",
+                "storedProcedureParameters": {
+                  "action": {
+                    "value": "entity_failed",
+                    "type": "String"
+                  },
+                  "controller_id": {
+                    "value": {
+                      "value": "@item().transform_config_id",
+                      "type": "Expression"
+                    },
+                    "type": "Int64"
+                  },
+                  "log_id": {
+                    "value": {
+                      "value": "@activity('Lookup log_id in fact').output.firstRow.log_id",
+                      "type": "Expression"
+                    },
+                    "type": "Int64"
+                  },
+                  "pipeline_name": {
+                    "value": {
+                      "value": "@item().pipeline_name",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "pipeline_run_id": {
+                    "value": {
+                      "value": "@pipeline().RunId",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "target_table": {
+                    "value": {
+                      "value": "@concat(item().target_schema,'.',item().target_table)",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "error_message": {
+                    "value": {
+                      "value": "@activity('dynamic fact').error.message",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  }
+                }
+              },
+              "linkedService": {
+                "name": "insurance_warehouse",
+                "properties": {
+                  "annotations": [],
+                  "type": "DataWarehouse",
+                  "typeProperties": {
+                    "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                    "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                    "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                  }
+                }
+              }
+            },
+            {
+              "name": "Lookup log_id in fact",
+              "type": "Lookup",
+              "dependsOn": [],
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureOutput": false,
+                "secureInput": false
+              },
+              "typeProperties": {
+                "source": {
+                  "type": "DataWarehouseSource",
+                  "sqlReaderStoredProcedureName": "[meta].[usp_etl_log]",
+                  "storedProcedureParameters": {
+                    "action": {
+                      "type": "String",
+                      "value": "pipeline_start"
+                    },
+                    "controller_id": {
+                      "type": "Int64",
+                      "value": {
+                        "value": "@item().transform_config_id",
+                        "type": "Expression"
+                      }
+                    },
+                    "pipeline_name": {
+                      "type": "String",
+                      "value": {
+                        "value": "@item().pipeline_name",
+                        "type": "Expression"
+                      }
+                    },
+                    "pipeline_run_id": {
+                      "type": "String",
+                      "value": {
+                        "value": "@pipeline().RunId",
+                        "type": "Expression"
+                      }
+                    }
+                  },
+                  "queryTimeout": "02:00:00",
+                  "partitionOption": "None"
+                },
+                "datasetSettings": {
+                  "annotations": [],
+                  "linkedService": {
+                    "name": "insurance_warehouse",
+                    "properties": {
+                      "annotations": [],
+                      "type": "DataWarehouse",
+                      "typeProperties": {
+                        "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                        "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                        "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                      }
+                    }
+                  },
+                  "type": "DataWarehouseTable",
+                  "schema": [],
+                  "typeProperties": {}
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "Filter fact",
+        "type": "Filter",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "Lookup config",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "items": {
+            "value": "@activity('Lookup config').output.value",
+            "type": "Expression"
+          },
+          "condition": {
+            "value": "@startswith(item().target_table, 'fact_')",
+            "type": "Expression"
+          }
+        }
+      },
+      {
+        "name": "End pipeline",
+        "type": "SqlServerStoredProcedure",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "ForEach Dimension",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_log]",
+          "storedProcedureParameters": {
+            "action": {
+              "value": "pipeline_end",
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('Start pipeline').output.firstRow.log_id",
+                "type": "Expression"
+              },
+              "type": "Int64"
+            },
+            "pipeline_name": {
+              "value": "silver_to_gold",
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "annotations": [],
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+            }
+          }
+        }
+      },
+      {
+        "name": "End failed pipeline",
+        "type": "SqlServerStoredProcedure",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "ForEach Dimension",
+            "dependencyConditions": [
+              "Failed"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_log]",
+          "storedProcedureParameters": {
+            "action": {
+              "value": "entity_failed",
+              "type": "String"
+            },
+            "error_message": {
+              "value": {
+                "value": "@activity('ForEach Dimension').error.message",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('Start pipeline').output.firstRow.log_id",
+                "type": "Expression"
+              },
+              "type": "Int64"
+            },
+            "pipeline_name": {
+              "value": "silver_to_gold",
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "annotations": [],
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+            }
+          }
+        }
+      },
+      {
+        "name": "Start pipeline",
+        "type": "Lookup",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "source": {
+            "type": "DataWarehouseSource",
+            "sqlReaderStoredProcedureName": "[meta].[usp_etl_log]",
+            "storedProcedureParameters": {
+              "action": {
+                "type": "String",
+                "value": "pipeline_start"
+              },
+              "controller_id": {
+                "type": "Int64",
+                "value": "0"
+              },
+              "pipeline_name": {
+                "type": "String",
+                "value": {
+                  "value": "silver_to_gold",
+                  "type": "Expression"
+                }
+              },
+              "pipeline_run_id": {
+                "type": "String",
+                "value": {
+                  "value": "@pipeline().RunId",
+                  "type": "Expression"
+                }
+              }
+            },
+            "queryTimeout": "02:00:00",
+            "partitionOption": "None"
+          },
+          "datasetSettings": {
+            "annotations": [],
+            "linkedService": {
+              "name": "insurance_warehouse",
+              "properties": {
+                "annotations": [],
+                "type": "DataWarehouse",
+                "typeProperties": {
+                  "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                  "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                  "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                }
+              }
+            },
+            "type": "DataWarehouseTable",
+            "schema": [],
+            "typeProperties": {}
+          }
+        }
+      },
+      {
+        "name": "End pipeline Fact",
+        "type": "SqlServerStoredProcedure",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "ForEach Fact",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_log]",
+          "storedProcedureParameters": {
+            "action": {
+              "value": "pipeline_end",
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('Start pipeline').output.firstRow.log_id",
+                "type": "Expression"
+              },
+              "type": "Int64"
+            },
+            "pipeline_name": {
+              "value": "silver_to_gold",
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "annotations": [],
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+            }
+          }
+        }
+      },
+      {
+        "name": "End failed pipeline Fact",
+        "type": "SqlServerStoredProcedure",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "ForEach Fact",
+            "dependencyConditions": [
+              "Failed"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_log]",
+          "storedProcedureParameters": {
+            "action": {
+              "value": "entity_failed",
+              "type": "String"
+            },
+            "error_message": {
+              "value": {
+                "value": "@activity('ForEach Fact').error.message",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('Start pipeline').output.firstRow.log_id",
+                "type": "Expression"
+              },
+              "type": "Int64"
+            },
+            "pipeline_name": {
+              "value": "silver_to_gold",
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "annotations": [],
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "1132769264b9c44d4ac5",
+  "displayName": "Payment Operations",
+  "displayOption": "FitToWidth",
+  "height": 720,
+  "width": 1280,
+  "pageBinding": {
+    "name": "9bed3f0e0a0e3360bb05",
+    "type": "Default",
+    "parameters": [],
+    "acceptsFilterContext": "None"
+  },
+  "visualInteractions": [
+    {
+      "source": "910ce3550e5466a1dd09",
+      "target": "db96397d9476965b51bd",
+      "type": "DataFilter"
+    }
+  ]
+}

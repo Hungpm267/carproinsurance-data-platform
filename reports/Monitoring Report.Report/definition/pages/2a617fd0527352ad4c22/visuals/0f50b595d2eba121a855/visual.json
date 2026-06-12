@@ -1,0 +1,316 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "0f50b595d2eba121a855",
+  "position": {
+    "x": 32.5,
+    "y": 443.75,
+    "z": 6000,
+    "height": 263.75,
+    "width": 607.5,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "etl_execution_log"
+                    }
+                  },
+                  "Property": "pipeline_name"
+                }
+              },
+              "queryRef": "etl_execution_log.pipeline_name",
+              "nativeQueryRef": "Pipeline",
+              "displayName": "Pipeline"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "etl_execution_log"
+                    }
+                  },
+                  "Property": "controller_id"
+                }
+              },
+              "queryRef": "Sum(etl_execution_log.controller_id)",
+              "nativeQueryRef": "Controller ID",
+              "displayName": "Controller ID"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "etl_execution_log"
+                    }
+                  },
+                  "Property": "start_time"
+                }
+              },
+              "queryRef": "etl_execution_log.start_time",
+              "nativeQueryRef": "Start Time",
+              "displayName": "Start Time"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "etl_execution_log"
+                    }
+                  },
+                  "Property": "end_time"
+                }
+              },
+              "queryRef": "etl_execution_log.end_time",
+              "nativeQueryRef": "End Time",
+              "displayName": "End Time"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "etl_execution_log"
+                    }
+                  },
+                  "Property": "Total Rows Inserted"
+                }
+              },
+              "queryRef": "etl_execution_log.Total Rows Inserted",
+              "nativeQueryRef": "Total Rows Inserted"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "etl_execution_log"
+                    }
+                  },
+                  "Property": "Total Rows Updated"
+                }
+              },
+              "queryRef": "etl_execution_log.Total Rows Updated",
+              "nativeQueryRef": "Total Rows Updated"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "etl_execution_log"
+                    }
+                  },
+                  "Property": "Total Rows Rejected"
+                }
+              },
+              "queryRef": "etl_execution_log.Total Rows Rejected",
+              "nativeQueryRef": "Total Rows Rejected"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "etl_execution_log"
+                  }
+                },
+                "Property": "pipeline_name"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "110.50000038008758D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "etl_execution_log.pipeline_name"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "96.46700795961023D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "Sum(etl_execution_log.controller_id)"
+          }
+        }
+      ],
+      "columnHeaders": [
+        {
+          "properties": {
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnFormatting": [
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "Sum(etl_execution_log.controller_id)"
+          }
+        },
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "etl_execution_log.start_time"
+          }
+        },
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "etl_execution_log.end_time"
+          }
+        },
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "etl_execution_log.Total Rows Inserted"
+          }
+        },
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "etl_execution_log.Total Rows Updated"
+          }
+        },
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "etl_execution_log.Total Rows Rejected"
+          }
+        }
+      ],
+      "total": [
+        {
+          "properties": {
+            "totals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Pipeline runs detail'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

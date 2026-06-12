@@ -1,0 +1,36 @@
+table Quotation_Funnel_Stages
+	lineageTag: 021d9361-22ef-4fd4-b220-f5d92e6282bd
+
+	column Stage
+		lineageTag: 0d261230-9622-4a34-9a8e-683e1bf4a5c6
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Stage]
+
+		annotation SummarizationSetBy = Automatic
+
+	column SortOrder
+		formatString: 0
+		lineageTag: 5201a66d-593a-444e-a4b4-18275ec8f167
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [SortOrder]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Quotation_Funnel_Stages = calculated
+		mode: import
+		source =
+				
+				DATATABLE(
+				    "Stage", STRING,
+				    "SortOrder", INTEGER,
+				    {
+				        {"All Quoted", 1},
+				        {"Accepted", 2},
+				        {"Converted", 3}
+				    }
+				)
+
+	annotation PBI_Id = 25bc38f9435c4ee283034902f4a793d0
+

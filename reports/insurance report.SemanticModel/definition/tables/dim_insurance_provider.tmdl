@@ -1,0 +1,58 @@
+table dim_insurance_provider
+	lineageTag: 2514a578-890f-4ca6-a3f8-1650a8883ab9
+	sourceLineageTag: [gold].[dim_insurance_provider]
+
+	column provider_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 7145734e-2b4e-42e1-b32c-4350cdfec57b
+		sourceLineageTag: provider_key
+		summarizeBy: none
+		sourceColumn: provider_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_code
+		dataType: string
+		lineageTag: aee734b6-c701-468f-8fbd-11d81c05371a
+		sourceLineageTag: provider_code
+		summarizeBy: none
+		sourceColumn: provider_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_name
+		dataType: string
+		lineageTag: 2f95e29a-84ff-4202-bfce-efa76b38e828
+		sourceLineageTag: provider_name
+		summarizeBy: none
+		sourceColumn: provider_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_group
+		dataType: string
+		lineageTag: e0cf2c08-2985-4154-abd2-065ef4b32256
+		sourceLineageTag: provider_group
+		summarizeBy: none
+		sourceColumn: provider_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_active
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 30964844-fab4-48ab-bf8a-86353ef0df88
+		sourceLineageTag: is_active
+		summarizeBy: none
+		sourceColumn: is_active
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_insurance_provider = entity
+		mode: directLake
+		source
+			entityName: dim_insurance_provider
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

@@ -1,0 +1,79 @@
+{
+  "name": "Custom",
+  "dataColors": [
+    "#083358",
+    "#0F4471",
+    "#E13341",
+    "#6F9FC9",
+    "#1A5A8F",
+    "#FD6F6F",
+    "#8A94A0",
+    "#F6F6F6"
+  ],
+  "visualStyles": {
+    "*": {
+      "*": {
+        "border": [
+          {
+            "color": {
+              "solid": {
+                "color": "#E6E9EC"
+              }
+            },
+            "show": true,
+            "radius": 10
+          }
+        ]
+      }
+    },
+    "page": {
+      "*": {
+        "background": [
+          {
+            "color": {
+              "solid": {
+                "color": "#F6F6F6"
+              }
+            },
+            "transparency": 0
+          }
+        ],
+        "outspace": [
+          {
+            "color": {
+              "solid": {
+                "color": "#F6F6F6"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "textClasses": {
+    "label": {
+      "color": "#5A6B7A",
+      "fontSize": 10
+    },
+    "callout": {
+      "color": "#083358"
+    },
+    "title": {
+      "color": "#083358"
+    },
+    "header": {
+      "color": "#083358"
+    }
+  },
+  "foregroundNeutralSecondary": "#5A6B7A",
+  "backgroundLight": "#E6E9EC",
+  "foregroundNeutralTertiary": "#8A94A0",
+  "backgroundNeutral": "#F6F6F6",
+  "bad": "#16A34A",
+  "neutral": "#FC3C3C",
+  "good": "#8A94A0",
+  "minimum": "#083358",
+  "center": "#6F9FC9",
+  "maximum": "#F6F6F6",
+  "foreground": "#083358"
+}

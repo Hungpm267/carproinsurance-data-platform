@@ -1,0 +1,90 @@
+table fact_payment
+	lineageTag: f9eba4e0-6f81-4373-9780-825d7c65d7dc
+	sourceLineageTag: [gold].[fact_payment]
+
+	column payment_id
+		dataType: string
+		lineageTag: 56c3a8db-10b4-401b-85f7-d55e599a1ad2
+		sourceLineageTag: payment_id
+		summarizeBy: none
+		sourceColumn: payment_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_id
+		dataType: string
+		lineageTag: 60894da4-d5a0-419c-b9f0-722e79e90b34
+		sourceLineageTag: policy_id
+		summarizeBy: none
+		sourceColumn: policy_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 58af4a56-5c1a-4e46-b2fd-86791d1d314a
+		sourceLineageTag: payment_date_key
+		summarizeBy: none
+		sourceColumn: payment_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_method_key
+		dataType: int64
+		formatString: 0
+		lineageTag: d1641266-42d3-434f-ba39-3f76d8d29ef2
+		sourceLineageTag: payment_method_key
+		summarizeBy: none
+		sourceColumn: payment_method_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_status_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 524c3fb0-9c77-436a-8630-e4affd3c5d27
+		sourceLineageTag: payment_status_key
+		summarizeBy: none
+		sourceColumn: payment_status_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_amount
+		dataType: double
+		lineageTag: 1c26ea56-1002-41dd-aa4d-2bfa51512cbe
+		sourceLineageTag: payment_amount
+		summarizeBy: sum
+		sourceColumn: payment_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column is_successful_payment
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 8ee5aeca-444b-4ee3-8eec-b18c01d2fbc1
+		sourceLineageTag: is_successful_payment
+		summarizeBy: none
+		sourceColumn: is_successful_payment
+
+		annotation SummarizationSetBy = Automatic
+
+	column fact_payment_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 0982cd05-4a3d-4a71-ac4f-43073e08f909
+		sourceLineageTag: fact_payment_key
+		summarizeBy: sum
+		sourceColumn: fact_payment_key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_payment = entity
+		mode: directLake
+		source
+			entityName: fact_payment
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

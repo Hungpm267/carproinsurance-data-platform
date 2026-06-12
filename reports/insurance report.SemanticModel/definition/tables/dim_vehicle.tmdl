@@ -1,0 +1,106 @@
+table dim_vehicle
+	lineageTag: 8f8494f1-d2ba-4467-bbe7-3a6057a412ff
+	sourceLineageTag: [gold].[dim_vehicle]
+
+	column vehicle_key
+		dataType: int64
+		formatString: 0
+		lineageTag: bd5bb7af-d23d-49ef-99ba-7e5bfa718c2e
+		sourceLineageTag: vehicle_key
+		summarizeBy: none
+		sourceColumn: vehicle_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_id
+		dataType: string
+		lineageTag: ec4deddc-e2c0-4367-bdfa-ae6da92836d8
+		sourceLineageTag: vehicle_id
+		summarizeBy: none
+		sourceColumn: vehicle_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: string
+		lineageTag: 0785167e-f74b-4873-95b6-a4a5a7a7c16d
+		sourceLineageTag: customer_id
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column plate_number
+		dataType: string
+		lineageTag: 15e9beae-05d2-458c-abfb-434b4a0bee0a
+		sourceLineageTag: plate_number
+		summarizeBy: none
+		sourceColumn: plate_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_brand
+		dataType: string
+		lineageTag: 5505efd3-3538-47a2-86a4-9b65197d6aa4
+		sourceLineageTag: vehicle_brand
+		summarizeBy: none
+		sourceColumn: vehicle_brand
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_model
+		dataType: string
+		lineageTag: b2e24bb8-3a55-4997-9437-547a47251b02
+		sourceLineageTag: vehicle_model
+		summarizeBy: none
+		sourceColumn: vehicle_model
+
+		annotation SummarizationSetBy = Automatic
+
+	column manufacture_year
+		dataType: int64
+		formatString: 0
+		lineageTag: 0f5411ab-8891-43fb-af3d-f185449fcffd
+		sourceLineageTag: manufacture_year
+		summarizeBy: none
+		sourceColumn: manufacture_year
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_age_years
+		dataType: int64
+		formatString: 0
+		lineageTag: 6ece4d76-715f-4447-9cf5-eba37afc4efa
+		sourceLineageTag: vehicle_age_years
+		summarizeBy: none
+		sourceColumn: vehicle_age_years
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_value
+		dataType: double
+		lineageTag: 1a3e99df-dcd6-4705-a2c4-aebf9ce3ba8d
+		sourceLineageTag: vehicle_value
+		summarizeBy: none
+		sourceColumn: vehicle_value
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column vehicle_value_band
+		dataType: string
+		lineageTag: 8442c2db-0f96-4091-9449-b72e3e642cdb
+		sourceLineageTag: vehicle_value_band
+		summarizeBy: none
+		sourceColumn: vehicle_value_band
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_vehicle = entity
+		mode: directLake
+		source
+			entityName: dim_vehicle
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

@@ -1,0 +1,25 @@
+table Dim_Date_Trend
+	lineageTag: f62afbb8-ce79-4297-a6dc-e5fc9c759a9e
+
+	column Column
+		formatString: 0
+		lineageTag: 3fd7064f-7dd2-4234-93fa-540279d5dd3f
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Column]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Date_Trend = calculated
+		mode: import
+		source = Row("Column", BLANK())
+
+	annotation PBI_Id = 5da04427933a42c58a5b802eefa164ab
+
+	annotation 436ba87b-9c83-4389-a31b-ebd06a36be98 = {"Expression":"SUMMARIZE('Dim_Date', 'Dim_Date'[month_name], 'Dim_Date'[month_number])"}
+
+	annotation 277cc1b9-af89-4597-8e15-cacc25c0886b = ```
+			You cannot use calculated table to reference Direct Lake table. The model includes the following calculated table, '<oii>Table</oii>', which is not supported. Please remove the calculated table. See https://go.microsoft.com/fwlink/?linkid=2215281 to learn more.
+			
+			```
+

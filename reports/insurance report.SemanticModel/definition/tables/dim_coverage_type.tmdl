@@ -1,0 +1,30 @@
+table dim_coverage_type
+	lineageTag: a3739b2f-96b5-4050-8fa6-3506ace6f265
+	sourceLineageTag: [gold].[dim_coverage_type]
+
+	column coverage_type_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 1b309c2a-c5b9-41fb-9f11-b0be7930f6d9
+		sourceLineageTag: coverage_type_key
+		summarizeBy: none
+		sourceColumn: coverage_type_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column coverage_type_name
+		dataType: string
+		lineageTag: 37714b9c-7d79-4a83-b196-835e60060698
+		sourceLineageTag: coverage_type_name
+		summarizeBy: none
+		sourceColumn: coverage_type_name
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_coverage_type = entity
+		mode: directLake
+		source
+			entityName: dim_coverage_type
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

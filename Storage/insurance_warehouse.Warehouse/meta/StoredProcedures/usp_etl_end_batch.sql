@@ -23,33 +23,43 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT ROW_NUMBER() OVER (ORDER BY controller_id) AS rn, *
-    INTO #r
-    FROM OPENJSON(@results, '$.rows')
-    WITH (
-        controller_id  BIGINT       '$.controller_id',
-        target_table   VARCHAR(200) '$.target_table',
-        status         VARCHAR(20)  '$.status',
-        rows_read      BIGINT       '$.rows_read',
-        rows_inserted  BIGINT       '$.rows_inserted',
-        watermark_from VARCHAR(50)  '$.watermark_from',
-        watermark_to   VARCHAR(50)  '$.watermark_to',
-        error          VARCHAR(2000)'$.error'
-    );
+    DECLARE @n INT;
+    SELECT @n = COUNT(*) FROM OPENJSON(@results, '$.rows');
 
-    DECLARE @i INT = 1, @n INT = (SELECT COUNT(*) FROM #r);
+    DECLARE @i INT = 0;
     DECLARE @cid BIGINT, @status VARCHAR(20), @tt VARCHAR(200),
             @rr BIGINT, @ri BIGINT, @wf VARCHAR(50), @wt VARCHAR(50), @err VARCHAR(2000),
             @lid BIGINT,
             @wt2 VARCHAR(50), @errmsg VARCHAR(2000);
 
-    WHILE @i <= @n
+    WHILE @i < @n
     BEGIN
-        SELECT @cid=controller_id, @status=status, @tt=target_table,
-               @rr=rows_read, @ri=rows_inserted,
-               @wf=watermark_from, @wt=watermark_to, @err=error
-        FROM #r WHERE rn=@i;
+        -- Dynamically build query to read from the JSON array at index @i
+        DECLARE @sql NVARCHAR(MAX) = N'
+            SELECT 
+                @cid_out = JSON_VALUE(@json, ''$.rows[' + CAST(@i AS VARCHAR(10)) + '].controller_id''),
+                @tt_out = JSON_VALUE(@json, ''$.rows[' + CAST(@i AS VARCHAR(10)) + '].target_table''),
+                @status_out = JSON_VALUE(@json, ''$.rows[' + CAST(@i AS VARCHAR(10)) + '].status''),
+                @rr_out = JSON_VALUE(@json, ''$.rows[' + CAST(@i AS VARCHAR(10)) + '].rows_read''),
+                @ri_out = JSON_VALUE(@json, ''$.rows[' + CAST(@i AS VARCHAR(10)) + '].rows_inserted''),
+                @wf_out = JSON_VALUE(@json, ''$.rows[' + CAST(@i AS VARCHAR(10)) + '].watermark_from''),
+                @wt_out = JSON_VALUE(@json, ''$.rows[' + CAST(@i AS VARCHAR(10)) + '].watermark_to''),
+                @err_out = JSON_VALUE(@json, ''$.rows[' + CAST(@i AS VARCHAR(10)) + '].error'')
+        ';
 
+        EXEC sp_executesql @sql,
+            N'@json VARCHAR(MAX), @cid_out BIGINT OUTPUT, @tt_out VARCHAR(200) OUTPUT, @status_out VARCHAR(20) OUTPUT, @rr_out BIGINT OUTPUT, @ri_out BIGINT OUTPUT, @wf_out VARCHAR(50) OUTPUT, @wt_out VARCHAR(50) OUTPUT, @err_out VARCHAR(2000) OUTPUT',
+            @json = @results,
+            @cid_out = @cid OUTPUT,
+            @tt_out = @tt OUTPUT,
+            @status_out = @status OUTPUT,
+            @rr_out = @rr OUTPUT,
+            @ri_out = @ri OUTPUT,
+            @wf_out = @wf OUTPUT,
+            @wt_out = @wt OUTPUT,
+            @err_out = @err OUTPUT;
+
+        -- Process retrieved values
         SELECT @lid = log_id FROM meta.etl_execution_log
         WHERE pipeline_run_id=@pipeline_run_id AND controller_id=@cid AND status='Running';
 
@@ -80,6 +90,4 @@ BEGIN
 
         SET @i += 1;
     END
-
-    DROP TABLE #r;
 END

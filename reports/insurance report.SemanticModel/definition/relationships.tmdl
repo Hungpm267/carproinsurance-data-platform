@@ -43,6 +43,7 @@ relationship 700ea6df-6164-c1b5-337b-97310a029aa5
 	toColumn: dim_date.date_key
 
 relationship a97410e7-6178-63ed-50aa-80bd4c3929c1
+	crossFilteringBehavior: bothDirections
 	fromColumn: fact_quotation.agent_key
 	toColumn: dim_agent.agent_key
 

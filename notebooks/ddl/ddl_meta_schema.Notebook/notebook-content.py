@@ -8,17 +8,18 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "0aa0a14b-3288-4f9f-93d1-d888edaf7070",
-# META       "default_lakehouse_name": "insurance_lakehouse",
-# META       "default_lakehouse_workspace_id": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
-# META       "known_lakehouses": [
-# META         {
-# META           "id": "0aa0a14b-3288-4f9f-93d1-d888edaf7070"
-# META         }
-# META       ]
+# META       "default_lakehouse_name": "",
+# META       "default_lakehouse_workspace_id": "",
+# META       "known_lakehouses": []
 # META     },
 # META     "warehouse": {
-# META       "known_warehouses": []
+# META       "default_warehouse": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+# META       "known_warehouses": [
+# META         {
+# META           "id": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+# META           "type": "Datawarehouse"
+# META         }
+# META       ]
 # META     }
 # META   }
 # META }
@@ -244,6 +245,8 @@
 # MAGIC      true, 3, 5, 60, current_timestamp(), 'seed'),
 # MAGIC     ('ingest_policy_to_bronze', 'ingestion',
 # MAGIC      true, 3, 5, 60, current_timestamp(), 'seed'),
+# MAGIC     ('bronze_to_silver', 'transformation',
+# MAGIC      true, 3, 5, 90, current_timestamp(), 'seed'),
 # MAGIC     ('silver_to_gold', 'transformation',
 # MAGIC      true, 3, 5, 90, current_timestamp(), 'seed')
 

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "DataPipeline",
+    "displayName": "recovery_master_invoke_recovery"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "f5d6af24-d3ac-9431-4c71-bf8f54afcdf8"
+  }
+}

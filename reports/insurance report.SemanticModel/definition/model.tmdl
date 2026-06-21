@@ -35,4 +35,10 @@ ref table TrendMonthAxis
 ref table DimMonth
 ref table Dim_Date_Trend
 ref table DimAgeBand
+ref table security_user_scope
+
+ref role SG-Insurance-Executive
+ref role SG-Insurance-Agent
+ref role SG-Insurance-BranchManager
+ref role SG-Insurance-RegionalManager
 

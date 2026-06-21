@@ -79,7 +79,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Policy Status'"
+                  "Value": "'POLICY STATUS'"
                 }
               }
             }

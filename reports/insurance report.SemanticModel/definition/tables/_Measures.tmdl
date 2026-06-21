@@ -1116,7 +1116,7 @@ table _Measures
 			        DISTINCTCOUNT ( dim_customer[customer_id] ),
 			        REMOVEFILTERS ( dim_date ),
 			        dim_customer[customer_since_date] <= AsOf,
-			        dim_customer[is_current] = "true"
+			        dim_customer[is_current]
 			    )
 		formatString: 0
 		lineageTag: 1d47ac3b-c73b-48bc-87eb-806b2a993556
@@ -1195,7 +1195,7 @@ table _Measures
 			            DISTINCTCOUNT ( dim_customer[customer_id] ),
 			            REMOVEFILTERS ( dim_date ),
 			            dim_customer[customer_since_date] <= AsOf,
-			            dim_customer[is_current] = "true",
+			            dim_customer[is_current],
 			            NOT ISBLANK ( dim_customer[date_of_birth] ),
 			            FILTER (
 			                dim_customer,
@@ -1424,40 +1424,42 @@ table _Measures
 
 	measure 'Policies Issued (Line Chart)' = ```
 			
-			VAR SelectedYear = SELECTEDVALUE('Dim_Date'[year_number])
-			VAR AxisMonths = VALUES('Dim_Date'[month_name])
+			VAR SelectedYear = SELECTEDVALUE(dim_date[year_number])
+			VAR ChartMonthNum = MAX(TrendMonthAxis[Month Number])
 			RETURN
 			    IF(
 			        ISBLANK(SelectedYear),
 			        [Policies Issued],
 			        CALCULATE(
 			            [Policies Issued],
-			            REMOVEFILTERS('Dim_Date'[month_number], 'Dim_Date'[month_name], 'Dim_Date'[date_key], 'Dim_Date'[full_date]),
-			            'Dim_Date'[year_number] = SelectedYear,
-			            TREATAS(AxisMonths, 'Dim_Date'[month_name])
+			            FILTER(
+			            ALL(dim_date), 
+			            VALUE(dim_date[year_number]) = SelectedYear &&
+			            dim_date[month_number] = ChartMonthNum
+			        )
 			        )
 			    )
-			
 			```
 		formatString: 0
 		lineageTag: 5fe5b5de-906a-48aa-96b0-da4915509fa2
 
 	measure 'Total Premium (Line Chart)' = ```
 			
-			VAR SelectedYear = SELECTEDVALUE('Dim_Date'[year_number])
-			VAR AxisMonths = VALUES('Dim_Date'[month_name])
+			VAR SelectedYear = SELECTEDVALUE(dim_date[year_number])
+			VAR ChartMonthNum = MAX(TrendMonthAxis[Month Number])
 			RETURN
 			    IF(
 			        ISBLANK(SelectedYear),
 			        [Total Premium],
 			        CALCULATE(
 			            [Total Premium],
-			            REMOVEFILTERS('Dim_Date'[month_number], 'Dim_Date'[month_name], 'Dim_Date'[date_key], 'Dim_Date'[full_date]),
-			            'Dim_Date'[year_number] = SelectedYear,
-			            TREATAS(AxisMonths, 'Dim_Date'[month_name])
+			            FILTER(
+			            ALL(dim_date), 
+			            VALUE(dim_date[year_number]) = SelectedYear &&
+			            dim_date[month_number] = ChartMonthNum
+			        )
 			        )
 			    )
-			
 			```
 		lineageTag: 1a7668f3-9656-4579-b5d9-969a31894c6f
 

@@ -1,0 +1,13 @@
+role SG-Insurance-BranchManager
+	modelPermission: read
+
+	tablePermission dim_agent =
+			dim_agent[branch]
+			=
+			LOOKUPVALUE(
+			    security_user_scope[branch_name],
+			    security_user_scope[user_email], USERPRINCIPALNAME()
+			)
+
+	annotation PBI_Id = f96643d8ae084dafaa3ebc3f534d3a32
+

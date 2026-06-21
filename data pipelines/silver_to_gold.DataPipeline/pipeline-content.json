@@ -4,8 +4,8 @@
       {
         "type": "TridentNotebook",
         "typeProperties": {
-          "notebookId": "48ed23bb-de12-bf50-4684-66e84a645ae6",
-          "workspaceId": "00000000-0000-0000-0000-000000000000"
+          "notebookId": "4a645ae6-66e8-4684-bf50-de1248ed23bb",
+          "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
         },
         "policy": {
           "timeout": "0.12:00:00",
@@ -15,6 +15,8 @@
           "secureOutput": false
         },
         "name": "Orchestrator",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
         "dependsOn": [
           {
             "activity": "create start batch log in gold",
@@ -184,7 +186,7 @@
         "name": "Updated end pipeline status",
         "dependsOn": [
           {
-            "activity": "end batch log in gold",
+            "activity": "Orchestrate Silver to Gold",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -202,7 +204,7 @@
             },
             "error_message": {
               "value": {
-                "value": "@activity('end batch log in gold').error.message",
+                "value": "@activity('Orchestrate Silver to Gold').error.message",
                 "type": "Expression"
               },
               "type": "String"
@@ -249,7 +251,7 @@
         "name": "Updated end failed pipeline status and log error",
         "dependsOn": [
           {
-            "activity": "end batch log in gold",
+            "activity": "Orchestrate Silver to Gold",
             "dependencyConditions": [
               "Failed"
             ]
@@ -304,9 +306,9 @@
           "properties": {
             "type": "DataWarehouse",
             "typeProperties": {
-              "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
               "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
-              "workspaceId": "00000000-0000-0000-0000-000000000000"
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
             },
             "annotations": []
           }
@@ -319,14 +321,9 @@
           "secureOutput": false
         },
         "name": "create start batch log in gold",
-        "dependsOn": [
-          {
-            "activity": "Filter dim and fact",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
       },
       {
         "type": "SqlServerStoredProcedure",
@@ -358,6 +355,51 @@
           "properties": {
             "type": "DataWarehouse",
             "typeProperties": {
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "end batch log in gold",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "Orchestrator",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[gold].[usp_orchestrate_silver_to_gold]",
+          "storedProcedureParameters": {
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
               "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
               "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
               "workspaceId": "00000000-0000-0000-0000-000000000000"
@@ -372,10 +414,10 @@
           "secureInput": false,
           "secureOutput": false
         },
-        "name": "end batch log in gold",
+        "name": "Orchestrate Silver to Gold",
         "dependsOn": [
           {
-            "activity": "Orchestrator",
+            "activity": "Filter dim and fact",
             "dependencyConditions": [
               "Succeeded"
             ]

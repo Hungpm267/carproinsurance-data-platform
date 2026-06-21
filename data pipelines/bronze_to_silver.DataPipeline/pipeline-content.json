@@ -2,54 +2,6 @@
   "properties": {
     "activities": [
       {
-        "type": "Lookup",
-        "typeProperties": {
-          "source": {
-            "type": "DataWarehouseSource",
-            "partitionOption": "None",
-            "queryTimeout": "02:00:00"
-          },
-          "datasetSettings": {
-            "type": "DataWarehouseTable",
-            "typeProperties": {
-              "schema": "meta",
-              "table": "etl_transform_config"
-            },
-            "schema": [],
-            "linkedService": {
-              "name": "insurance_warehouse",
-              "properties": {
-                "type": "DataWarehouse",
-                "typeProperties": {
-                  "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
-                  "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
-                  "workspaceId": "00000000-0000-0000-0000-000000000000"
-                },
-                "annotations": []
-              }
-            },
-            "annotations": []
-          },
-          "firstRowOnly": false
-        },
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureInput": false,
-          "secureOutput": false
-        },
-        "name": "Lookup ETL Transform Config",
-        "dependsOn": [
-          {
-            "activity": "Start pipeline",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
-      },
-      {
         "type": "Filter",
         "typeProperties": {
           "items": {
@@ -62,14 +14,9 @@
           }
         },
         "name": "Filter Bronze To Silver Rows",
-        "dependsOn": [
-          {
-            "activity": "Lookup ETL Transform Config",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
       },
       {
         "type": "ForEach",
@@ -174,9 +121,9 @@
                     "properties": {
                       "type": "DataWarehouse",
                       "typeProperties": {
-                        "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                        "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
                         "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
-                        "workspaceId": "00000000-0000-0000-0000-000000000000"
+                        "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
                       },
                       "annotations": []
                     }
@@ -246,9 +193,9 @@
                 "properties": {
                   "type": "DataWarehouse",
                   "typeProperties": {
-                    "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                    "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
                     "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
-                    "workspaceId": "00000000-0000-0000-0000-000000000000"
+                    "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
                   },
                   "annotations": []
                 }
@@ -347,9 +294,9 @@
                 "properties": {
                   "type": "DataWarehouse",
                   "typeProperties": {
-                    "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                    "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
                     "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
-                    "workspaceId": "00000000-0000-0000-0000-000000000000"
+                    "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
                   },
                   "annotations": []
                 }
@@ -374,72 +321,9 @@
           ]
         },
         "name": "ForEachSilverNoteBook",
-        "dependsOn": [
-          {
-            "activity": "Filter Bronze To Silver Rows",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
-      },
-      {
-        "type": "SqlServerStoredProcedure",
-        "typeProperties": {
-          "storedProcedureName": "[meta].[usp_etl_log]",
-          "storedProcedureParameters": {
-            "action": {
-              "value": "pipeline_end",
-              "type": "String"
-            },
-            "pipeline_run_id": {
-              "value": {
-                "value": "@pipeline().RunId",
-                "type": "Expression"
-              },
-              "type": "String"
-            },
-            "log_id": {
-              "value": {
-                "value": "@activity('Start pipeline').output.firstRow.log_id",
-                "type": "Expression"
-              },
-              "type": "Int64"
-            },
-            "pipeline_name": {
-              "value": "bronze_to_silver",
-              "type": "String"
-            }
-          }
-        },
-        "linkedService": {
-          "name": "insurance_warehouse",
-          "properties": {
-            "type": "DataWarehouse",
-            "typeProperties": {
-              "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
-              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
-              "workspaceId": "00000000-0000-0000-0000-000000000000"
-            },
-            "annotations": []
-          }
-        },
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureInput": false,
-          "secureOutput": false
-        },
-        "name": "End pipeline",
-        "dependsOn": [
-          {
-            "activity": "ForEachSilverNoteBook",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
       },
       {
         "type": "Lookup",
@@ -540,6 +424,51 @@
           "properties": {
             "type": "DataWarehouse",
             "typeProperties": {
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "End failed pipeline",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "ForEachSilverNoteBook",
+            "dependencyConditions": [
+              "Failed"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[silver].[usp_orchestrate_bronze_to_silver]",
+          "storedProcedureParameters": {
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
               "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
               "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
               "workspaceId": "00000000-0000-0000-0000-000000000000"
@@ -554,12 +483,135 @@
           "secureInput": false,
           "secureOutput": false
         },
-        "name": "End failed pipeline",
+        "name": "Orchestrate Bronze to Silver",
         "dependsOn": [
           {
-            "activity": "ForEachSilverNoteBook",
+            "activity": "Start pipeline",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_log]",
+          "storedProcedureParameters": {
+            "action": {
+              "value": "entity_failed",
+              "type": "String"
+            },
+            "error_message": {
+              "value": {
+                "value": "@activity('Orchestrate Bronze to Silver').error.message",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('Start pipeline').output.firstRow.log_id",
+                "type": "Expression"
+              },
+              "type": "Int64"
+            },
+            "pipeline_name": {
+              "value": "silver_to_gold",
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Updated end failed pipeline status and log error",
+        "dependsOn": [
+          {
+            "activity": "Orchestrate Bronze to Silver",
             "dependencyConditions": [
               "Failed"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_log]",
+          "storedProcedureParameters": {
+            "action": {
+              "value": "pipeline_end",
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('Start pipeline').output.firstRow.log_id",
+                "type": "Expression"
+              },
+              "type": "Int64"
+            },
+            "pipeline_name": {
+              "value": "bronze_to_silver",
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Updated end pipeline status",
+        "dependsOn": [
+          {
+            "activity": "Orchestrate Bronze to Silver",
+            "dependencyConditions": [
+              "Succeeded"
             ]
           }
         ]

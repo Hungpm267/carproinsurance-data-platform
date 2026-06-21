@@ -101,8 +101,7 @@ if _wc and _lw:
     df_quotation_src = df_quotation_src.filter(
         F.col(_wc) > F.to_timestamp(F.lit(_lw))
     )
-    print(f"[INFO] Incremental load: {_wc} > {_lw}")
-else:
+    pri
     print(f"[INFO] Full load — no last_watermark found")
 
 

@@ -38,6 +38,7 @@ cfg = spark.sql("""
            watermark_column, last_watermark
     FROM   insurance_warehouse.meta.etl_transform_config
 """).collect()
+display(cfg)
 
 # METADATA ********************
 
@@ -108,7 +109,7 @@ DAG = {
 try:
     results = notebookutils.notebook.runMultiple(DAG, {"displayDAGViaGraphviz": True})
 except Exception as e:
-    results = e.args[1] if len(e.args) > 1 else {}
+    results = getattr(e, "result", None) or {}
 
 # METADATA ********************
 

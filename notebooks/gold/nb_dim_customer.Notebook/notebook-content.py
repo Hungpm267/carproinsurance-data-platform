@@ -14,6 +14,9 @@
 # META       "known_lakehouses": [
 # META         {
 # META           "id": "0aa0a14b-3288-4f9f-93d1-d888edaf7070"
+# META         },
+# META         {
+# META           "id": "44e67c59-51d0-48bf-9ab0-8941a5d7c912"
 # META         }
 # META       ]
 # META     }

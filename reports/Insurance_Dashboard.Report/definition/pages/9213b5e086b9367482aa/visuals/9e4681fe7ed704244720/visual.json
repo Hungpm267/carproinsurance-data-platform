@@ -44,6 +44,13 @@
                   "Value": "'Dropdown'"
                 }
               }
+            },
+            "isInvertedSelectionMode": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
           }
         }
@@ -67,7 +74,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Date'"
+                  "Value": "'DATE'"
                 }
               }
             }

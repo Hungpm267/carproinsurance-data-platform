@@ -1,0 +1,624 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "4a645ae6-66e8-4684-bf50-de1248ed23bb",
+          "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Orchestrator",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "create start batch log in gold",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Lookup",
+        "typeProperties": {
+          "source": {
+            "type": "DataWarehouseSource",
+            "sqlReaderStoredProcedureName": "[meta].[usp_etl_log]",
+            "storedProcedureParameters": {
+              "action": {
+                "type": "String",
+                "value": "pipeline_start"
+              },
+              "controller_id": {
+                "type": "Int64",
+                "value": "0"
+              },
+              "pipeline_name": {
+                "type": "String",
+                "value": {
+                  "value": "@pipeline().parameters.recover_pipeline_name",
+                  "type": "Expression"
+                }
+              },
+              "pipeline_run_id": {
+                "type": "String",
+                "value": {
+                  "value": "@pipeline().RunId",
+                  "type": "Expression"
+                }
+              }
+            },
+            "partitionOption": "None",
+            "queryTimeout": "02:00:00"
+          },
+          "datasetSettings": {
+            "type": "DataWarehouseTable",
+            "schema": [],
+            "linkedService": {
+              "name": "insurance_warehouse_test",
+              "properties": {
+                "type": "DataWarehouse",
+                "typeProperties": {
+                  "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+                  "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                  "workspaceId": "00000000-0000-0000-0000-000000000000"
+                },
+                "annotations": []
+              }
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Log_Start_Pipeline",
+        "dependsOn": []
+      },
+      {
+        "type": "Lookup",
+        "typeProperties": {
+          "source": {
+            "type": "DataWarehouseSource",
+            "sqlReaderQuery": {
+              "value": "DECLARE @failed_run_id VARCHAR(64) = '@{pipeline().parameters.failed_transform_run_id}';\nDECLARE @pipeline_name VARCHAR(64) = '@{pipeline().parameters.pipeline_name}';\nDECLARE @error_status VARCHAR(64) = '@{pipeline().parameters.error_status}';\n\n;WITH errors AS (\n    SELECT\n        e.error_id,\n        e.error_code,\n        e.error_message,\n        e.target_table,\n        e.layer_name,\n        l.controller_id AS transform_config_id,\n        l.pipeline_run_id,\n        ROW_NUMBER() OVER (\n            PARTITION BY l.controller_id\n            ORDER BY e.error_timestamp DESC\n        ) AS rn\n    FROM meta.error_logging_table e\n    INNER JOIN meta.etl_execution_log l ON e.execution_id = l.log_id\n    WHERE l.pipeline_run_id = @failed_run_id\n      AND l.pipeline_name = @pipeline_name\n      AND e.status = @error_status\n--      AND e.layer_name = 'gold'\n)\nSELECT\n    err.error_id,\n    err.error_code,\n    err.error_message AS original_error_message,\n    err.layer_name,\n    tc.transform_config_id,\n    tc.pipeline_name,\n    tc.source_layer,\n    tc.source_schema,\n    tc.source_table,\n    tc.target_layer,\n    tc.target_schema,\n    tc.target_table,\n    tc.transform_type,\n    tc.primary_key_columns,\n    tc.partition_column,\n    tc.dependency_pipeline,\n    tc.notebook_id,\n    tc.watermark_column,\n    tc.last_watermark\nFROM errors err\nINNER JOIN meta.etl_transform_config tc\n    ON tc.transform_config_id = err.transform_config_id\nWHERE err.rn = 1\nORDER BY tc.transform_config_id;",
+              "type": "Expression"
+            },
+            "partitionOption": "None",
+            "queryTimeout": "02:00:00"
+          },
+          "datasetSettings": {
+            "type": "DataWarehouseTable",
+            "schema": [],
+            "linkedService": {
+              "name": "insurance_warehouse_test",
+              "properties": {
+                "type": "DataWarehouse",
+                "typeProperties": {
+                  "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+                  "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                  "workspaceId": "00000000-0000-0000-0000-000000000000"
+                },
+                "annotations": []
+              }
+            },
+            "annotations": []
+          },
+          "firstRowOnly": false
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Lookup_Recovery_Errors",
+        "dependsOn": [
+          {
+            "activity": "Log_Start_Pipeline",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_log]",
+          "storedProcedureParameters": {
+            "action": {
+              "value": "pipeline_end",
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('Log_Start_Pipeline').output.firstRow.log_id",
+                "type": "Expression"
+              },
+              "type": "Int64"
+            },
+            "pipeline_name": {
+              "value": {
+                "value": "@pipeline().parameters.recover_pipeline_name",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse_test",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Updated end pipeline status",
+        "dependsOn": [
+          {
+            "activity": "Sp_Log_End_Batch_Success",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_log]",
+          "storedProcedureParameters": {
+            "action": {
+              "value": "entity_failed",
+              "type": "String"
+            },
+            "error_message": {
+              "value": {
+                "value": "@activity('Recovery_Orchestrator').error.message",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('Log_Start_Pipeline').output.firstRow.log_id",
+                "type": "Expression"
+              },
+              "type": "Int64"
+            },
+            "pipeline_name": {
+              "value": {
+                "value": "@pipeline().parameters.recover_pipeline_name",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse_test",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Updated end failed pipeline status and log error",
+        "dependsOn": [
+          {
+            "activity": "Sp_Log_End_Batch_Failed",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Filter",
+        "typeProperties": {
+          "items": {
+            "value": "@activity('Lookup transform config').output.value",
+            "type": "Expression"
+          },
+          "condition": {
+            "value": "@equals(item().pipeline_name, 'silver_to_gold')",
+            "type": "Expression"
+          }
+        },
+        "name": "Filter dim and fact",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_start_batch_gold]",
+          "storedProcedureParameters": {
+            "pipeline_name": {
+              "value": {
+                "value": "@pipeline().parameters.recover_pipeline_name",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "create start batch log in gold",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_end_batch]",
+          "storedProcedureParameters": {
+            "results": {
+              "value": {
+                "value": "@activity('Orchestrator').output.result.exitValue",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "pipeline_name": {
+              "value": {
+                "value": "@pipeline().parameters.recover_pipeline_name",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "end batch log in gold",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": [
+          {
+            "activity": "Orchestrator",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "34ca36aa-3f9a-a2d4-46db-5079e0636a22",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "recovery_rows": {
+              "value": {
+                "value": "@if(empty(activity('Lookup_Recovery_Errors').output.value), '[]', string(activity('Lookup_Recovery_Errors').output.value))",
+                "type": "Expression"
+              },
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 3,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Recovery_Orchestrator",
+        "dependsOn": [
+          {
+            "activity": "Sp_Log_Start_Batch",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_start_batch_recovery_gold]",
+          "storedProcedureParameters": {
+            "pipeline_run_id": {
+              "value": "@pipeline().RunId",
+              "type": "String"
+            },
+            "pipeline_name": {
+              "value": {
+                "value": "@pipeline().parameters.recover_pipeline_name",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "failed_transform_run_id": {
+              "value": {
+                "value": "@pipeline().parameters.failed_transform_run_id",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "source_pipeline_name": {
+              "value": {
+                "value": "@pipeline().parameters.pipeline_name",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "error_status": {
+              "value": {
+                "value": "@pipeline().parameters.error_status",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse_test",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Sp_Log_Start_Batch",
+        "dependsOn": [
+          {
+            "activity": "Lookup_Recovery_Errors",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_end_batch_recovery]",
+          "storedProcedureParameters": {
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "results": {
+              "value": "@activity('Recovery_Orchestrator').output.result.exitValue",
+              "type": "String"
+            },
+            "pipeline_name": {
+              "value": "@pipeline().parameters.recover_pipeline_name",
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse_test",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Sp_Log_End_Batch_Success",
+        "dependsOn": [
+          {
+            "activity": "Recovery_Orchestrator",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_abort_batch_recovery]",
+          "storedProcedureParameters": {
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "pipeline_name": {
+              "value": {
+                "value": "@pipeline().parameters.recover_pipeline_name",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "error_message": {
+              "value": {
+                "value": "@activity('Recovery_Orchestrator').error.message",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse_test",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Sp_Log_End_Batch_Failed",
+        "dependsOn": [
+          {
+            "activity": "Recovery_Orchestrator",
+            "dependencyConditions": [
+              "Failed"
+            ]
+          }
+        ]
+      }
+    ],
+    "parameters": {
+      "pipeline_name": {
+        "type": "string",
+        "defaultValue": "silver_to_gold"
+      },
+      "recover_pipeline_name": {
+        "type": "string",
+        "defaultValue": "recover_silver_to_gold"
+      },
+      "default_watermark": {
+        "type": "string",
+        "defaultValue": "1900-01-01T00:00:00Z"
+      },
+      "failed_transform_run_id1": {
+        "type": "string",
+        "defaultValue": "@activity('silver_to_gold').output.pipelineRunId"
+      },
+      "error_status": {
+        "type": "string",
+        "defaultValue": "New"
+      },
+      "failed_transform_run_id": {
+        "type": "string",
+        "defaultValue": "TEST-FAILED-SILVER-GOLD-RUN-001"
+      }
+    }
+  }
+}

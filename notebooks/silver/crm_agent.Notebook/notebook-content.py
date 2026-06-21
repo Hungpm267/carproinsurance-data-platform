@@ -244,7 +244,9 @@ if new_watermark is not None and _ci:
         SET    last_watermark = '{new_watermark}'
         WHERE  transform_config_id = {_ci}
     """)
-    rows_inserted = df_customer_silver.count()
+    # rows_inserted = df_customer_silver.count() old: wrong df
+    rows_inserted = df_agent_silver.count()
+    
 else:
     rows_inserted = 0
 

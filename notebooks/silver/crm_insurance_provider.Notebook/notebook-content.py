@@ -67,7 +67,9 @@ df_provider_silver = (
         F.upper(F.trim(F.col("provider_code"))).alias("provider_code"),
         F.trim(F.col("provider_name")).alias("provider_name"),
         F.trim(F.col("provider_group")).alias("provider_group"),
-        F.col("active_flag").cast("boolean").alias("is_active"),
+        F.col("active_flag").cast("boolean"),
+        F.to_date(F.col("created_date")).alias("created_date"),
+        F.col("updated_at")
     )
     .dropDuplicates([BK_COL])
 )

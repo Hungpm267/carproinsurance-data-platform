@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_date"
+                      "Entity": "TrendMonthAxis"
                     }
                   },
-                  "Property": "month_name_short"
+                  "Property": "Month"
                 }
               },
-              "queryRef": "dim_date.month_name_short",
-              "nativeQueryRef": "month_name_short",
+              "queryRef": "TrendMonthAxis.Month",
+              "nativeQueryRef": "Month",
               "active": true
             }
           ]
@@ -46,7 +46,8 @@
                 }
               },
               "queryRef": "_Measures.Policies Issued (Line Chart)",
-              "nativeQueryRef": "Policies Issued (Line Chart)"
+              "nativeQueryRef": "Policies",
+              "displayName": "Policies"
             }
           ]
         },
@@ -64,7 +65,8 @@
                 }
               },
               "queryRef": "_Measures.Total Premium (Line Chart)",
-              "nativeQueryRef": "Total Premium (Line Chart)"
+              "nativeQueryRef": "Premium",
+              "displayName": "Premium"
             }
           ]
         }
@@ -105,6 +107,13 @@
               "expr": {
                 "Literal": {
                   "Value": "'dotted'"
+                }
+              }
+            },
+            "showMarker": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
               }
             }
@@ -175,6 +184,13 @@
                   "Value": "true"
                 }
               }
+            },
+            "position": {
+              "expr": {
+                "Literal": {
+                  "Value": "'TopCenter'"
+                }
+              }
             }
           }
         }
@@ -197,6 +213,26 @@
           },
           "selector": {
             "metadata": "_Measures.Policies Issued (Line Chart)"
+          }
+        }
+      ],
+      "valueAxis": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "showAxisTitle": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
           }
         }
       ]
@@ -327,7 +363,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Monthly pemium and number of policies'"
+                  "Value": "'Monthly premium and number of policies'"
                 }
               }
             },

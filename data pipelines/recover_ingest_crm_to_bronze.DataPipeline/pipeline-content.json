@@ -66,11 +66,11 @@
           "scriptBlockExecutionTimeout": "02:00:00"
         },
         "linkedService": {
-          "name": "insurance_warehouse",
+          "name": "insurance_warehouse_test",
           "properties": {
             "type": "DataWarehouse",
             "typeProperties": {
-              "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
               "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
               "workspaceId": "00000000-0000-0000-0000-000000000000"
             },
@@ -79,7 +79,7 @@
         },
         "policy": {
           "timeout": "0.12:00:00",
-          "retry": 0,
+          "retry": 2,
           "retryIntervalInSeconds": 30,
           "secureInput": false,
           "secureOutput": false
@@ -506,7 +506,7 @@
                     "name": "Fail_Full",
                     "dependsOn": [
                       {
-                        "activity": "Script_Log_Entity_Failed_Full",
+                        "activity": "Update_Need_Manual_Check_Full",
                         "dependencyConditions": [
                           "Succeeded"
                         ]
@@ -598,6 +598,126 @@
                         ]
                       }
                     ]
+                  },
+                  {
+                    "type": "Script",
+                    "typeProperties": {
+                      "scripts": [
+                        {
+                          "text": {
+                            "value": "IF @error_id IS NULL OR LTRIM(RTRIM(@error_id)) = ''\n    THROW 51000, 'error_id is required.', 1;\n\nIF @error_status NOT IN ('Resolved', 'Need Manual Check')\n    THROW 51001, 'error_status must be Resolved or Need Manual Check.', 1;\n\nUPDATE meta.error_logging_table\nSET\n    status = @error_status,\n    updated_at = SYSUTCDATETIME()\nWHERE error_id = @error_id\n  AND status IN ('New', 'In-Progress');",
+                            "type": "Expression"
+                          },
+                          "type": "NonQuery",
+                          "parameters": [
+                            {
+                              "name": "error_resolution_status",
+                              "type": "String",
+                              "value": "Resolved",
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "error_id",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().error_id}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            }
+                          ]
+                        }
+                      ],
+                      "scriptBlockExecutionTimeout": "02:00:00"
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Update_Resolved_Full",
+                    "dependsOn": [
+                      {
+                        "activity": "Script_Log_Entity_Success_Full",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Script",
+                    "typeProperties": {
+                      "scripts": [
+                        {
+                          "text": {
+                            "value": "IF @error_id IS NULL OR LTRIM(RTRIM(@error_id)) = ''\n    THROW 51000, 'error_id is required.', 1;\n\nIF @error_status NOT IN ('Resolved', 'Need Manual Check')\n    THROW 51001, 'error_status must be Resolved or Need Manual Check.', 1;\n\nUPDATE meta.error_logging_table\nSET\n    status = @error_status,\n    updated_at = SYSUTCDATETIME()\nWHERE error_id = @error_id\n  AND status IN ('New', 'In-Progress');",
+                            "type": "Expression"
+                          },
+                          "type": "NonQuery",
+                          "parameters": [
+                            {
+                              "name": "error_resolution_status",
+                              "type": "String",
+                              "value": "Need Manual Check",
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "error_id",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().error_id}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            }
+                          ]
+                        }
+                      ],
+                      "scriptBlockExecutionTimeout": "02:00:00"
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Update_Need_Manual_Check_Full",
+                    "dependsOn": [
+                      {
+                        "activity": "Script_Log_Entity_Failed_Full",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
                   }
                 ],
                 "ifFalseActivities": [
@@ -636,7 +756,6 @@
                         "type": "LakehouseTableSink",
                         "tableActionOption": "Append",
                         "applyVOrder": false,
-                        "partitionOption": "None",
                         "datasetSettings": {
                           "type": "LakehouseTable",
                           "typeProperties": {
@@ -651,11 +770,11 @@
                           },
                           "schema": [],
                           "linkedService": {
-                            "name": "insurance_lakehouse",
+                            "name": "insurance_lakehouse_test",
                             "properties": {
                               "type": "Lakehouse",
                               "typeProperties": {
-                                "artifactId": "d70da340-541e-8b79-4ae0-18bd78024e7f",
+                                "artifactId": "a5d7c912-8941-9ab0-48bf-51d044e67c59",
                                 "workspaceId": "00000000-0000-0000-0000-000000000000",
                                 "rootFolder": "Tables"
                               },
@@ -906,7 +1025,7 @@
                     "name": "Fail_Incremental",
                     "dependsOn": [
                       {
-                        "activity": "Script_Log_Entity_Failed_Incremental",
+                        "activity": "Update_Need_Manual_Check",
                         "dependencyConditions": [
                           "Succeeded"
                         ]
@@ -919,7 +1038,7 @@
                       "scripts": [
                         {
                           "text": {
-                            "value": "DECLARE @calculated_watermark_to NVARCHAR(50) = 'NULL';\r\n\r\nIF @load_type != 'FULL' AND @watermark_column IS NOT NULL\r\nBEGIN\r\n    DECLARE @sql NVARCHAR(MAX);\r\n    DECLARE @param_definition NVARCHAR(500) = N'@res NVARCHAR(50) OUTPUT';\r\n    \r\n    SET @sql = N'SELECT @res = CAST(MAX([' + REPLACE(@watermark_column, '''', '''''') + ']) AS NVARCHAR(50)) FROM [' + REPLACE(@target_schema, '''', '''''') + '].[' + REPLACE(@target_table, '''', '''''') + ']';\r\n    \r\n    EXEC sp_executesql @sql, @param_definition, @res = @calculated_watermark_to OUTPUT;\r\nEND\r\n\r\n-- Gọi Procedure log với các tham số sạch\r\nEXEC meta.usp_etl_log \r\n    @action = 'entity_success',\r\n    @pipeline_run_id = @pipeline_run_id,\r\n    @pipeline_name = @pipeline_name,\r\n    @controller_id = @controller_id,\r\n    @log_id = @log_id,\r\n    @load_type = @load_type,\r\n    @rows_read = @rows_read,\r\n    @rows_inserted = @rows_read, \r\n    @watermark_from = @watermark_from,\r\n    @watermark_to = @calculated_watermark_to;",
+                            "value": "DECLARE @calculated_watermark_to NVARCHAR(50) = 'NULL';\n\nIF @load_type != 'FULL' AND @watermark_column IS NOT NULL\nBEGIN\n    DECLARE @sql NVARCHAR(MAX);\n    DECLARE @param_definition NVARCHAR(500) = N'@res NVARCHAR(50) OUTPUT';\n    \n    SET @sql = N'SELECT @res = CAST(MAX([' + REPLACE(@watermark_column, '''', '''''') + ']) AS NVARCHAR(50)) FROM [' + REPLACE(@target_schema, '''', '''''') + '].[' + REPLACE(@target_table, '''', '''''') + ']';\n    \n    EXEC sp_executesql @sql, @param_definition, @res = @calculated_watermark_to OUTPUT;\nEND\n\nEXEC meta.usp_etl_log \n    @action = 'entity_success',\n    @pipeline_run_id = @pipeline_run_id,\n    @pipeline_name = @pipeline_name,\n    @controller_id = @controller_id,\n    @log_id = @log_id,\n    @load_type = @load_type,\n    @rows_read = @rows_read,\n    @rows_inserted = @rows_read, \n    @watermark_from = @watermark_from,\n    @watermark_to = @calculated_watermark_to;",
                             "type": "Expression"
                           },
                           "type": "Query",
@@ -936,25 +1055,37 @@
                             {
                               "name": "watermark_column",
                               "type": "String",
-                              "value": "@{item().watermark_column}",
+                              "value": {
+                                "value": "@{item().watermark_column}",
+                                "type": "Expression"
+                              },
                               "direction": "Input"
                             },
                             {
                               "name": "target_schema",
                               "type": "String",
-                              "value": "@{item().target_schema}",
+                              "value": {
+                                "value": "@{item().target_schema}",
+                                "type": "Expression"
+                              },
                               "direction": "Input"
                             },
                             {
                               "name": "target_table",
                               "type": "String",
-                              "value": "@{item().target_table}",
+                              "value": {
+                                "value": "@{item().target_table}",
+                                "type": "Expression"
+                              },
                               "direction": "Input"
                             },
                             {
                               "name": "pipeline_run_id",
                               "type": "String",
-                              "value": "@{pipeline().RunId}",
+                              "value": {
+                                "value": "@{pipeline().RunId}",
+                                "type": "Expression"
+                              },
                               "direction": "Input"
                             },
                             {
@@ -969,7 +1100,10 @@
                             {
                               "name": "controller_id",
                               "type": "String",
-                              "value": "@{item().ingestion_config_id}",
+                              "value": {
+                                "value": "@{item().ingestion_config_id}",
+                                "type": "Expression"
+                              },
                               "direction": "Input"
                             },
                             {
@@ -984,13 +1118,19 @@
                             {
                               "name": "rows_read",
                               "type": "Int64",
-                              "value": "@activity('Copy_INCREMENTAL').output.rowsRead",
+                              "value": {
+                                "value": "@activity('Copy_INCREMENTAL').output.rowsRead",
+                                "type": "Expression"
+                              },
                               "direction": "Input"
                             },
                             {
                               "name": "watermark_from",
                               "type": "String",
-                              "value": "@{variables('watermark')}",
+                              "value": {
+                                "value": "@{variables('watermark')}",
+                                "type": "Expression"
+                              },
                               "direction": "Input"
                             }
                           ]
@@ -999,13 +1139,13 @@
                       "scriptBlockExecutionTimeout": "02:00:00"
                     },
                     "linkedService": {
-                      "name": "insurance_warehouse",
+                      "name": "insurance_warehouse_test",
                       "properties": {
                         "type": "DataWarehouse",
                         "typeProperties": {
-                          "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                          "artifactId": "bec559f0-02bf-4b73-b5dd-2356db297df8",
                           "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
-                          "workspaceId": "00000000-0000-0000-0000-000000000000"
+                          "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
                         },
                         "annotations": []
                       }
@@ -1017,15 +1157,10 @@
                       "secureInput": false,
                       "secureOutput": false
                     },
-                    "name": "Script_Log_Entity_Success_Incremental",
-                    "dependsOn": [
-                      {
-                        "activity": "Copy_INCREMENTAL",
-                        "dependencyConditions": [
-                          "Succeeded"
-                        ]
-                      }
-                    ]
+                    "name": "Script_Log_Entity_Success_Incremental_original",
+                    "state": "Inactive",
+                    "onInactiveMarkAs": "Succeeded",
+                    "dependsOn": []
                   },
                   {
                     "type": "Script",
@@ -1042,11 +1177,11 @@
                       "scriptBlockExecutionTimeout": "02:00:00"
                     },
                     "linkedService": {
-                      "name": "insurance_warehouse",
+                      "name": "insurance_warehouse_test",
                       "properties": {
                         "type": "DataWarehouse",
                         "typeProperties": {
-                          "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                          "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
                           "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
                           "workspaceId": "00000000-0000-0000-0000-000000000000"
                         },
@@ -1055,7 +1190,7 @@
                     },
                     "policy": {
                       "timeout": "0.12:00:00",
-                      "retry": 0,
+                      "retry": 2,
                       "retryIntervalInSeconds": 30,
                       "secureInput": false,
                       "secureOutput": false
@@ -1066,6 +1201,375 @@
                         "activity": "Copy_INCREMENTAL",
                         "dependencyConditions": [
                           "Failed"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Script",
+                    "typeProperties": {
+                      "scripts": [
+                        {
+                          "text": {
+                            "value": "IF @error_id IS NULL OR LTRIM(RTRIM(@error_id)) = ''\n    THROW 51000, 'error_id is required.', 1;\n\nIF @error_status NOT IN ('Resolved', 'Need Manual Check')\n    THROW 51001, 'error_status must be Resolved or Need Manual Check.', 1;\n\nUPDATE meta.error_logging_table\nSET\n    status = @error_status,\n    updated_at = SYSUTCDATETIME()\nWHERE error_id = @error_id\n  AND status IN ('New', 'In-Progress');",
+                            "type": "Expression"
+                          },
+                          "type": "NonQuery",
+                          "parameters": [
+                            {
+                              "name": "error_id",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().error_id}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "error_status",
+                              "type": "String",
+                              "value": "Resolved",
+                              "direction": "Input"
+                            }
+                          ]
+                        }
+                      ],
+                      "scriptBlockExecutionTimeout": "02:00:00"
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse_test",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 2,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Update_Resolved",
+                    "dependsOn": [
+                      {
+                        "activity": "Script_Log_Entity_Success_Incremental",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Script",
+                    "typeProperties": {
+                      "scripts": [
+                        {
+                          "text": {
+                            "value": "IF @error_id IS NULL OR LTRIM(RTRIM(@error_id)) = ''\n    THROW 51000, 'error_id is required.', 1;\n\nIF @error_status NOT IN ('Resolved', 'Need Manual Check')\n    THROW 51001, 'error_status must be Resolved or Need Manual Check.', 1;\n\nUPDATE meta.error_logging_table\nSET\n    status = @error_status,\n    updated_at = SYSUTCDATETIME()\nWHERE error_id = @error_id\n  AND status IN ('New', 'In-Progress');",
+                            "type": "Expression"
+                          },
+                          "type": "NonQuery",
+                          "parameters": [
+                            {
+                              "name": "error_status",
+                              "type": "String",
+                              "value": "Need Manual Check",
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "error_id",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().error_id}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            }
+                          ]
+                        }
+                      ],
+                      "scriptBlockExecutionTimeout": "02:00:00"
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse_test",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 2,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Update_Need_Manual_Check",
+                    "dependsOn": [
+                      {
+                        "activity": "Script_Log_Entity_Failed_Incremental",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Script",
+                    "typeProperties": {
+                      "database": "insurance_lakehouse_test",
+                      "scripts": [
+                        {
+                          "text": {
+                            "value": "DECLARE @watermark_to VARCHAR(50) = NULL;\r\n\r\nIF UPPER(@load_type) <> 'FULL'\r\n   AND @watermark_column IS NOT NULL\r\n   AND @target_schema IS NOT NULL\r\n   AND @target_table IS NOT NULL\r\nBEGIN\r\n    DECLARE @sql NVARCHAR(MAX) = N'\r\n        SELECT @res = CAST(MAX(' + QUOTENAME(@watermark_column) + N') AS NVARCHAR(50))\r\n        FROM ' + QUOTENAME(@target_schema) + N'.' + QUOTENAME(@target_table);\r\n\r\n    EXEC sp_executesql @sql, N'@res VARCHAR(50) OUTPUT', @res = @watermark_to OUTPUT;\r\nEND;\r\n\r\nSELECT @watermark_to AS watermark_to;",
+                            "type": "Expression"
+                          },
+                          "type": "Query",
+                          "parameters": [
+                            {
+                              "name": "load_type",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().load_type}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "target_schema",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().target_schema}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "target_table",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().target_table}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "watermark_column",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().watermark_column}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            }
+                          ]
+                        }
+                      ],
+                      "scriptBlockExecutionTimeout": "02:00:00"
+                    },
+                    "externalReferences": {
+                      "connection": "237f1eff-d533-4be7-85b5-6bcb3af60194"
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 2,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Script_Get_Bronze_Watermark",
+                    "dependsOn": [
+                      {
+                        "activity": "Copy_INCREMENTAL",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Script",
+                    "typeProperties": {
+                      "scripts": [
+                        {
+                          "text": {
+                            "value": "EXEC meta.usp_etl_log\n    @action              = 'entity_success',\n    @pipeline_run_id     = @pipeline_run_id,\n    @pipeline_name       = @pipeline_name,\n    @controller_id       = @controller_id,\n    @log_id              = @log_id,\n    @load_type           = @load_type,\n    @rows_read           = @rows_read,\n    @rows_inserted       = @rows_read,\n    @watermark_from      = @watermark_from,\n    @watermark_to        = @watermark_to,\n    @ingestion_config_id = @ingestion_config_id;",
+                            "type": "Expression"
+                          },
+                          "type": "NonQuery",
+                          "parameters": [
+                            {
+                              "name": "load_type",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().load_type}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "watermark_column",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().watermark_column}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "target_schema",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().target_schema}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "target_table",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().target_table}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "pipeline_run_id",
+                              "type": "String",
+                              "value": {
+                                "value": "@{pipeline().RunId}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "pipeline_name",
+                              "type": "String",
+                              "value": {
+                                "value": "@{pipeline().parameters.recover_pipeline_name}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "controller_id",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().ingestion_config_id}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "log_id",
+                              "type": "String",
+                              "value": {
+                                "value": "@activity('Script_Log_Entity_Start').output.resultSets[0].rows[0].log_id",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "rows_read",
+                              "type": "Int64",
+                              "value": {
+                                "value": "@activity('Copy_INCREMENTAL').output.rowsRead",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "watermark_from",
+                              "type": "String",
+                              "value": {
+                                "value": "@{variables('watermark')}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "ingestion_config_id",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().ingestion_config_id}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "watermark_to",
+                              "type": "String",
+                              "value": {
+                                "value": "@variables('watermark_to')",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            }
+                          ]
+                        }
+                      ],
+                      "scriptBlockExecutionTimeout": "02:00:00"
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse_test",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 2,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Script_Log_Entity_Success_Incremental",
+                    "dependsOn": [
+                      {
+                        "activity": "Set_watermark_to",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "SetVariable",
+                    "typeProperties": {
+                      "variableName": "watermark_to",
+                      "value": {
+                        "value": "@coalesce(activity('Script_Get_Bronze_Watermark').output.resultSets[0].rows[0].watermark_to, '')",
+                        "type": "Expression"
+                      }
+                    },
+                    "policy": {
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Set_watermark_to",
+                    "dependsOn": [
+                      {
+                        "activity": "Script_Get_Bronze_Watermark",
+                        "dependencyConditions": [
+                          "Succeeded"
                         ]
                       }
                     ]
@@ -1088,7 +1592,7 @@
                 "scripts": [
                   {
                     "text": {
-                      "value": "EXEC meta.usp_etl_log \r\n    @action = 'entity_start',\r\n    @pipeline_run_id = '@{pipeline().RunId}',\r\n    @pipeline_name = '@{pipeline().parameters.pipeline_name}',\r\n    @controller_id = @{item().ingestion_config_id},\r\n    @watermark_from = @{if(empty(item().last_watermark), 'NULL', concat('''', replace(item().last_watermark, '''', ''''''), ''''))};",
+                      "value": "EXEC meta.usp_etl_log \r\n    @action = 'entity_start',\r\n    @pipeline_run_id = '@{pipeline().RunId}',\r\n    @pipeline_name = '@{pipeline().parameters.recover_pipeline_name}',\r\n    @controller_id = @{item().ingestion_config_id},\r\n    @watermark_from = @{if(empty(item().last_watermark), 'NULL', concat('''', replace(item().last_watermark, '''', ''''''), ''''))};",
                       "type": "Expression"
                     },
                     "type": "Query"
@@ -1097,11 +1601,11 @@
                 "scriptBlockExecutionTimeout": "02:00:00"
               },
               "linkedService": {
-                "name": "insurance_warehouse",
+                "name": "insurance_warehouse_test",
                 "properties": {
                   "type": "DataWarehouse",
                   "typeProperties": {
-                    "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                    "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
                     "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
                     "workspaceId": "00000000-0000-0000-0000-000000000000"
                   },
@@ -1145,11 +1649,11 @@
           "scriptBlockExecutionTimeout": "02:00:00"
         },
         "linkedService": {
-          "name": "insurance_warehouse",
+          "name": "insurance_warehouse_test",
           "properties": {
             "type": "DataWarehouse",
             "typeProperties": {
-              "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
               "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
               "workspaceId": "00000000-0000-0000-0000-000000000000"
             },
@@ -1158,7 +1662,7 @@
         },
         "policy": {
           "timeout": "0.12:00:00",
-          "retry": 0,
+          "retry": 2,
           "retryIntervalInSeconds": 30,
           "secureInput": false,
           "secureOutput": false
@@ -1210,11 +1714,11 @@
           "scriptBlockExecutionTimeout": "02:00:00"
         },
         "linkedService": {
-          "name": "insurance_warehouse",
+          "name": "insurance_warehouse_test",
           "properties": {
             "type": "DataWarehouse",
             "typeProperties": {
-              "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
               "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
               "workspaceId": "00000000-0000-0000-0000-000000000000"
             },
@@ -1223,7 +1727,7 @@
         },
         "policy": {
           "timeout": "0.12:00:00",
-          "retry": 0,
+          "retry": 2,
           "retryIntervalInSeconds": 30,
           "secureInput": false,
           "secureOutput": false
@@ -1282,11 +1786,11 @@
           "scriptBlockExecutionTimeout": "02:00:00"
         },
         "linkedService": {
-          "name": "insurance_warehouse",
+          "name": "insurance_warehouse_test",
           "properties": {
             "type": "DataWarehouse",
             "typeProperties": {
-              "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
               "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
               "workspaceId": "00000000-0000-0000-0000-000000000000"
             },
@@ -1295,7 +1799,7 @@
         },
         "policy": {
           "timeout": "0.12:00:00",
-          "retry": 0,
+          "retry": 2,
           "retryIntervalInSeconds": 30,
           "secureInput": false,
           "secureOutput": false
@@ -1314,7 +1818,7 @@
     "parameters": {
       "default_watermark": {
         "type": "string",
-        "defaultValue": "1900-01-01T00:00:00Z"
+        "defaultValue": "1900-01-01"
       },
       "failed_ingest_run_id1": {
         "type": "string",
@@ -1334,7 +1838,7 @@
       },
       "failed_ingest_run_id": {
         "type": "string",
-        "defaultValue": "813eb58c-2742-4168-a709-5ff6fd1c4673"
+        "defaultValue": "TEST-FAILED-INGEST-RUN-001"
       },
       "recover_pipeline_name": {
         "type": "string",
@@ -1343,6 +1847,9 @@
     },
     "variables": {
       "watermark": {
+        "type": "String"
+      },
+      "watermark_to": {
         "type": "String"
       }
     }

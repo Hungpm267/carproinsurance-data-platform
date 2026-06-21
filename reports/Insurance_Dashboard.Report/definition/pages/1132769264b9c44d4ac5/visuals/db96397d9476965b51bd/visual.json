@@ -4,7 +4,7 @@
   "position": {
     "x": 483.95061728395063,
     "y": 254.81481481481484,
-    "z": 9000,
+    "z": 8000,
     "height": 196.54320987654322,
     "width": 484.93827160493828,
     "tabOrder": 8000
@@ -136,6 +136,39 @@
                 }
               }
             }
+          }
+        }
+      ],
+      "lineStyles": [
+        {
+          "properties": {
+            "showMarker": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dataPoint": [
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E13341'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Refund Trend"
           }
         }
       ]

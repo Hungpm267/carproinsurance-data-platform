@@ -901,7 +901,7 @@
                           },
                           "Value": {
                             "Literal": {
-                              "Value": "'#00FF33'"
+                              "Value": "'#2E7D32'"
                             }
                           }
                         },
@@ -928,7 +928,7 @@
                           },
                           "Value": {
                             "Literal": {
-                              "Value": "'#118DFF'"
+                              "Value": "'#757575'"
                             }
                           }
                         },
@@ -955,7 +955,7 @@
                           },
                           "Value": {
                             "Literal": {
-                              "Value": "'#D64550'"
+                              "Value": "'#C62828'"
                             }
                           }
                         }

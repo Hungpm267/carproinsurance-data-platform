@@ -97,7 +97,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'City'"
+                  "Value": "'CITY'"
                 }
               }
             }

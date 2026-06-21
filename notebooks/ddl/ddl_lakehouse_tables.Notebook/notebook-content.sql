@@ -8,12 +8,15 @@
 -- META   },
 -- META   "dependencies": {
 -- META     "lakehouse": {
--- META       "default_lakehouse": "0aa0a14b-3288-4f9f-93d1-d888edaf7070",
--- META       "default_lakehouse_name": "insurance_lakehouse",
+-- META       "default_lakehouse": "44e67c59-51d0-48bf-9ab0-8941a5d7c912",
+-- META       "default_lakehouse_name": "insurance_lakehouse_test",
 -- META       "default_lakehouse_workspace_id": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
 -- META       "known_lakehouses": [
 -- META         {
 -- META           "id": "0aa0a14b-3288-4f9f-93d1-d888edaf7070"
+-- META         },
+-- META         {
+-- META           "id": "44e67c59-51d0-48bf-9ab0-8941a5d7c912"
 -- META         }
 -- META       ]
 -- META     }
@@ -27,7 +30,7 @@
 -- CELL ********************
 
 CREATE SCHEMA IF NOT EXISTS bronze;
-create SCHEMA if NOT EXISTS silver;
+CREATE SCHEMA if NOT EXISTS silver;
 CREATE SCHEMA IF NOT EXISTS gold;
 
 -- METADATA ********************
@@ -37,9 +40,34 @@ CREATE SCHEMA IF NOT EXISTS gold;
 -- META   "language_group": "synapse_pyspark"
 -- META }
 
--- MARKDOWN ********************
+-- CELL ********************
 
--- #### **B. Bronze Layer**
+-- TRUNCATE TABLE bronze.policy_cancellation;
+-- TRUNCATE TABLE bronze.policy_payment;
+-- TRUNCATE TABLE bronze.policy_policy;
+
+-- METADATA ********************
+
+-- META {
+-- META   "language": "sparksql",
+-- META   "language_group": "synapse_pyspark"
+-- META }
+
+-- CELL ********************
+
+-- TRUNCATE TABLE bronze.crm_agent;
+-- TRUNCATE TABLE bronze.crm_customer;
+-- TRUNCATE TABLE bronze.crm_insurance_provider;
+-- TRUNCATE TABLE bronze.crm_quotation;
+-- TRUNCATE TABLE bronze.crm_quotation_item;
+-- TRUNCATE TABLE bronze.crm_vehicle;
+
+-- METADATA ********************
+
+-- META {
+-- META   "language": "sparksql",
+-- META   "language_group": "synapse_pyspark"
+-- META }
 
 -- MARKDOWN ********************
 

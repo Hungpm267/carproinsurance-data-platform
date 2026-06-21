@@ -235,6 +235,70 @@
         "name": "Transform_bronze_to_silver",
         "dependsOn": [
           {
+            "activity": "refresh_metadata",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "WebActivity",
+        "typeProperties": {
+          "method": "POST",
+          "relativeUrl": "/v1/workspaces/e13dac5b-f5b1-4169-bb58-0f6d0bfea366/sqlEndpoints/5f22b528-3460-46a3-88ad-eac4f0695132/refreshMetadata",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "recreateTables": false,
+            "timeout": {
+              "timeUnit": "Minutes",
+              "value": 5
+            }
+          }
+        },
+        "externalReferences": {
+          "connection": "4d8dda6f-27d2-4356-a38a-4eced5aa6538"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Refresh metadata sql endpoint lakehouse api",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "38ac9d69-f0af-a775-446f-2d0f8467534e",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "lakehouse_id": {
+              "value": "5f22b528-3460-46a3-88ad-eac4f0695132",
+              "type": "string"
+            },
+            "workspace_id": {
+              "value": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "refresh_metadata",
+        "dependsOn": [
+          {
             "activity": "Ingest_crm_to_bronze_pipeline",
             "dependencyConditions": [
               "Succeeded"

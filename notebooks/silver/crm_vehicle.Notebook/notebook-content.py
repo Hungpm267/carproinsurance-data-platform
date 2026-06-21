@@ -8,17 +8,18 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "0aa0a14b-3288-4f9f-93d1-d888edaf7070",
-# META       "default_lakehouse_name": "insurance_lakehouse",
-# META       "default_lakehouse_workspace_id": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
-# META       "known_lakehouses": [
-# META         {
-# META           "id": "0aa0a14b-3288-4f9f-93d1-d888edaf7070"
-# META         }
-# META       ]
+# META       "default_lakehouse_name": "",
+# META       "default_lakehouse_workspace_id": "",
+# META       "known_lakehouses": []
 # META     },
 # META     "warehouse": {
-# META       "known_warehouses": []
+# META       "default_warehouse": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+# META       "known_warehouses": [
+# META         {
+# META           "id": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+# META           "type": "Datawarehouse"
+# META         }
+# META       ]
 # META     }
 # META   }
 # META }
@@ -92,6 +93,8 @@ df_vehicle_silver = (
             F.col("vehicle_value").cast("decimal(18,2)") >= 0,
             F.col("vehicle_value").cast("decimal(18,2)")
         ).otherwise(F.lit(None).cast("decimal(18,2)")).alias("vehicle_value"),
+        F.to_date(F.col("created_date")).alias("created_date"),
+        F.col("updated_at")
     )
     .dropDuplicates([BK_COL])
 )

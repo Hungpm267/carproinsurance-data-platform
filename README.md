@@ -15,6 +15,7 @@ CarPro Insurance Data Platform is an enterprise-grade, end-to-end data engineeri
 * **Dynamic DAG Orchestration:** PySpark-driven execution (`notebookutils.notebook.runMultiple`) orchestrating parallel dimension loads followed by fact dependencies.
 * **Slowly Changing Dimensions (SCD Type 2):** Full historical tracking for customer profile changes using surrogate keys, effective/expiry dates, and active flags.
 * **Automated Failure Recovery:** Built-in recovery pipelines and checkpointing to resume failed runs without full re-computations.
+* **Interactive Local Visualizer:** Standalone Excalidraw-style interactive studio (`pipeline_visualizer.html`) for offline exploration of all pipeline workflows without active Fabric capacity.
 
 ---
 
@@ -65,10 +66,50 @@ flowchart TD
 
 ---
 
-## 3. Repository Structure
+## 3. Pipeline Orchestration & Workflow Visuals
+
+The data platform includes pre-configured Fabric Data Pipelines for end-to-end ingestion, schema initialization, metadata synchronization, and dimensional transformations.
+
+### 3.1 Master Orchestration Pipeline (`master_pipeline`)
+Controls conditional initial schema loading, parallel ingestion from CRM and landing files into Bronze, SQL Endpoint metadata refresh, followed by Silver and Gold transformations.
+
+![Master Pipeline](docs/images/pipeline_master.png)
+
+---
+
+### 3.2 CRM Ingestion Pipeline (`ingest_crm_to_bronze`)
+Logs execution start, queries dynamic ingestion parameters from `meta.etl_ingestion_config`, filters CRM tables, and executes batched data copying into Bronze Delta tables with full audit logging.
+
+![Ingest CRM to Bronze](docs/images/pipeline_ingest_crm.png)
+
+---
+
+### 3.3 Policy Ingestion Pipeline (`ingest_policy_to_bronze`)
+Extracts raw policy JSON files from the landing directory into Bronze Delta tables with automated high-watermark tracking and error handling.
+
+![Ingest Policy to Bronze](docs/images/pipeline_ingest_policy.png)
+
+---
+
+### 3.4 Bronze to Silver Transformation (`bronze_to_silver`)
+Performs schema validation, data deduplication, row-level hashing, and business cleansing across customer, vehicle, quotation, and policy datasets.
+
+![Bronze to Silver Pipeline](docs/images/pipeline_bronze_to_silver.png)
+
+---
+
+### 3.5 Silver to Gold Transformation (`silver_to_gold`)
+Initializes the batch log, triggers the PySpark Orchestrator to execute parallel dimension notebooks, and populates fact tables via stored procedures.
+
+![Silver to Gold Pipeline](docs/images/pipeline_silver_to_gold.png)
+
+---
+
+## 4. Repository Structure
 
 ```text
 carproinsurance-data-platform/
+├── pipeline_visualizer.html        # Interactive Excalidraw-style offline studio
 ├── data pipelines/                 # Microsoft Fabric Data Pipeline Definitions
 │   ├── master_pipeline.DataPipeline             # Master orchestration pipeline
 │   ├── ingest_crm_to_bronze.DataPipeline        # CRM ingestion to Bronze
@@ -111,17 +152,19 @@ carproinsurance-data-platform/
 │   ├── insurance_lakehouse.Lakehouse
 │   └── insurance_warehouse.Warehouse  # T-SQL DDLs & Stored Procedures (sp_*, usp_*)
 │
-└── reports/                        # Power BI Semantic Models & Reports
-    ├── Insurance_Dashboard.Report
-    ├── PolicyOperations.Report
-    ├── Payment_Regional_Dashboard.Report
-    ├── Monitoring Report.Report
-    └── insurance report.SemanticModel
+├── reports/                        # Power BI Semantic Models & Reports
+│   ├── Insurance_Dashboard.Report
+│   ├── PolicyOperations.Report
+│   ├── Payment_Regional_Dashboard.Report
+│   ├── Monitoring Report.Report
+│   └── insurance report.SemanticModel
+│
+└── docs/images/                    # Pipeline architecture and workflow screenshots
 ```
 
 ---
 
-## 4. Data Layers & Medallion Details
+## 5. Data Layers & Medallion Details
 
 ### Bronze Layer (Raw Ingestion)
 * Ingests source data from CRM (RDBMS) and Policy (JSON files) into raw Delta tables.
@@ -157,7 +200,7 @@ carproinsurance-data-platform/
 
 ---
 
-## 5. Metadata-Driven Governance
+## 6. Metadata-Driven Governance
 
 The ETL process is controlled via the `meta` schema:
 
@@ -169,7 +212,7 @@ The ETL process is controlled via the `meta` schema:
 
 ---
 
-## 6. Execution & Deployment Guide
+## 7. Execution & Deployment Guide
 
 ### Prerequisites
 * Microsoft Fabric workspace with Fabric capacity.
@@ -189,7 +232,7 @@ The ETL process is controlled via the `meta` schema:
 
 ---
 
-## 7. Reports & Analytics
+## 8. Reports & Analytics
 
 * **Insurance Executive Dashboard:** High-level KPIs (Total GWP, Active Policies, Loss Ratio, Renewal Rates).
 * **Policy Operations Report:** Underwriting turnaround time, quotation-to-policy conversion funnel, agent performance.

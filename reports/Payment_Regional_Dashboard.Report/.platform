@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "Payment_Regional_Dashboard"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "7f964870-2a7d-a778-499d-9924f31f28ad"
+  }
+}

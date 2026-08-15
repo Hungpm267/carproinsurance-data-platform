@@ -1,0 +1,30 @@
+table dim_policy_status
+	lineageTag: 993de1c3-2e16-496a-8ed6-fa8be8224f7c
+	sourceLineageTag: [gold].[dim_policy_status]
+
+	column policy_status_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 8cfd33f2-b651-4f1c-9f63-196d260774c9
+		sourceLineageTag: policy_status_key
+		summarizeBy: none
+		sourceColumn: policy_status_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_status_name
+		dataType: string
+		lineageTag: faf9ec7a-d07a-4958-aae4-e6422416637b
+		sourceLineageTag: policy_status_name
+		summarizeBy: none
+		sourceColumn: policy_status_name
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_policy_status = entity
+		mode: directLake
+		source
+			entityName: dim_policy_status
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

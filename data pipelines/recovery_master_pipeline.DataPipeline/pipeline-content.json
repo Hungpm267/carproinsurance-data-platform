@@ -1,0 +1,659 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "-- Script activity: Query — recovery_master_pipeline start\r\n-- Connection: Warehouse insurance_warehouse (Azure SQL Database, Entra ID)\r\n-- Requires: meta.usp_etl_log deployed\r\n\r\nEXEC meta.usp_etl_log\r\n    @action          = 'pipeline_start',\r\n    @pipeline_run_id = '@{pipeline().RunId}',\r\n    @pipeline_name   = '@{pipeline().parameters.recovery_master_pipeline_name}';\r\n",
+                "type": "Expression"
+              },
+              "type": "Query"
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "insurance_warehouse_test",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Log_Start",
+        "dependsOn": []
+      },
+      {
+        "type": "SetVariable",
+        "typeProperties": {
+          "variableName": "pipeline_log_id",
+          "value": {
+            "value": "@activity('Log_Start').output.resultSets[0].rows[0].log_id",
+            "type": "Expression"
+          }
+        },
+        "policy": {
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Set_Log_Id",
+        "dependsOn": [
+          {
+            "activity": "Log_Start",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "/*\n\n  recovery_master_pipeline — assess whether to wait, start master, or recover+continue.\n\n\n\n  NO SCHEMA CHANGES — any open error on a medallion stage pipeline triggers\n\n  RECOVER_AND_CONTINUE (master batch, continue phase, or prior run).\n\n\n\n  Decision order:\n\n    1. Last master Running        → WAIT\n\n    2. Any open stage errors      → RECOVER_AND_CONTINUE (earliest stage_order)\n\n    3. Else                       → START_NEW_MASTER\n\n\n\n  Pipeline parameters:\n\n    master_pipeline_name = master_pipeline\n\n    error_status         = New\n\n*/\n\n\n\nDECLARE @master_pipeline_name VARCHAR(100) = '@{pipeline().parameters.master_pipeline_name}';\n\nDECLARE @error_status         VARCHAR(64)  = '@{pipeline().parameters.error_status}';\n\n\n\n;WITH last_master AS (\n\n    SELECT TOP 1\n\n        pipeline_run_id,\n\n        status,\n\n        start_time\n\n    FROM meta.etl_execution_log\n\n    WHERE pipeline_name = @master_pipeline_name\n\n      AND controller_id = 0\n\n    ORDER BY start_time DESC\n\n),\n\nstage_map AS (\n\n    SELECT * FROM (VALUES\n\n        ('ingest_crm_to_bronze',     'recover_ingest_crm_to_bronze',     1),\n\n        ('ingest_policy_to_bronze',  'recover_ingest_policy_to_bronze',  2),\n\n        ('bronze_to_silver',         'recover_bronze_to_silver',         3),\n\n        ('silver_to_gold',           'recover_silver_to_gold',           4)\n\n    ) AS t(main_pipeline_name, recover_pipeline_name, stage_order)\n\n),\n\nopen_errors AS (\n\n    SELECT\n\n        l.pipeline_name AS failed_pipeline_name,\n\n        l.pipeline_run_id AS failed_run_id,\n\n        m.stage_order,\n\n        m.recover_pipeline_name,\n\n        e.error_id,\n\n        e.error_timestamp\n\n    FROM meta.error_logging_table e\n\n    INNER JOIN meta.etl_execution_log l ON e.execution_id = l.log_id\n\n    INNER JOIN stage_map m ON m.main_pipeline_name = l.pipeline_name\n\n    WHERE e.status = @error_status\n\n),\n\nerror_count AS (\n\n    SELECT COUNT(DISTINCT error_id) AS open_error_count FROM open_errors\n\n),\n\nfirst_failed AS (\n\n    SELECT TOP 1\n\n        failed_pipeline_name,\n\n        failed_run_id,\n\n        stage_order AS first_failed_stage_order,\n\n        recover_pipeline_name\n\n    FROM open_errors\n\n    ORDER BY stage_order, error_timestamp DESC\n\n),\n\nassessed AS (\n\n    SELECT\n\n        CASE\n\n            WHEN EXISTS (SELECT 1 FROM last_master WHERE status = N'Running') THEN 'WAIT'\n\n            WHEN COALESCE((SELECT open_error_count FROM error_count), 0) > 0 THEN 'RECOVER_AND_CONTINUE'\n\n            ELSE 'START_NEW_MASTER'\n\n        END AS action,\n\n        (SELECT pipeline_run_id FROM last_master) AS last_master_run_id,\n\n        (SELECT status FROM last_master) AS last_master_status,\n\n        (SELECT start_time FROM last_master) AS last_master_start,\n\n        COALESCE((SELECT open_error_count FROM error_count), 0) AS open_error_count,\n\n        (SELECT failed_pipeline_name FROM first_failed) AS first_failed_pipeline_name,\n\n        (SELECT failed_run_id FROM first_failed) AS first_failed_run_id,\n\n        (SELECT recover_pipeline_name FROM first_failed) AS recover_pipeline_name,\n\n        (SELECT first_failed_stage_order FROM first_failed) AS first_failed_stage_order\n\n)\n\nSELECT * FROM assessed;\n",
+                "type": "Expression"
+              },
+              "type": "Query"
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "insurance_warehouse_test",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Assess_Last_Master",
+        "dependsOn": [
+          {
+            "activity": "Set_Log_Id",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Switch",
+        "typeProperties": {
+          "on": {
+            "value": "@activity('Assess_Last_Master').output.resultSets[0].rows[0].action",
+            "type": "Expression"
+          },
+          "cases": [
+            {
+              "value": "WAIT",
+              "activities": [
+                {
+                  "type": "Script",
+                  "typeProperties": {
+                    "scripts": [
+                      {
+                        "text": {
+                          "value": "-- Script activity: Query — recovery_master_pipeline end\n\n-- Connection: Warehouse insurance_warehouse\n\n--\n\n-- Script parameters (Settings → Script parameters):\n\n--\n\n--   Name              Type    Value (dynamic content)\n\n--   ----------------  ------  ------------------------------------------\n\n--   pipeline_status   String  @variables('pipeline_status')\n\n--   log_id            Int64   @variables('pipeline_log_id')\n\n--   pipeline_run_id   String  @pipeline().RunId\n\n--   pipeline_name     String  @pipeline().parameters.recovery_master_pipeline_name\n\n--\n\n-- Set variables('pipeline_status') = Failed on failure branches before this activity.\n\n\n\n\n\n\n\nIF @pipeline_status = 'Failed'\n\nBEGIN\n\n    UPDATE meta.etl_execution_log\n\n    SET status   = 'Failed',\n\n        end_time = SYSDATETIME()\n\n    WHERE log_id = @log_id;\n\n\n\n    SELECT @log_id AS log_id;\n\nEND\n\nELSE\n\nBEGIN\n\n    EXEC meta.usp_etl_log\n\n        @action          = 'pipeline_end',\n\n        @pipeline_run_id = @pipeline_run_id,\n\n        @pipeline_name   = @pipeline_name,\n\n        @log_id          = @log_id;\n\nEND\n",
+                          "type": "Expression"
+                        },
+                        "type": "Query",
+                        "parameters": [
+                          {
+                            "name": "pipeline_status",
+                            "type": "String",
+                            "value": "@variables('pipeline_status')",
+                            "direction": "Input"
+                          },
+                          {
+                            "name": "log_id",
+                            "type": "String",
+                            "value": "@variables('pipeline_log_id')",
+                            "direction": "Input"
+                          },
+                          {
+                            "name": "pipeline_name",
+                            "type": "String",
+                            "value": "@pipeline().parameters.recovery_master_pipeline_name",
+                            "direction": "Input"
+                          }
+                        ]
+                      }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                  },
+                  "linkedService": {
+                    "name": "insurance_warehouse_test",
+                    "properties": {
+                      "type": "DataWarehouse",
+                      "typeProperties": {
+                        "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+                        "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                        "workspaceId": "00000000-0000-0000-0000-000000000000"
+                      },
+                      "annotations": []
+                    }
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 2,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Log_End_Wait",
+                  "dependsOn": []
+                }
+              ]
+            },
+            {
+              "value": "START_NEW_MASTER",
+              "activities": [
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {
+                      "initial_load": false
+                    },
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "b1342e50-8381-a9c6-4ce4-b0e32c6d1534",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Invoke_Master_Pipeline",
+                  "dependsOn": []
+                },
+                {
+                  "type": "SqlServerStoredProcedure",
+                  "typeProperties": {
+                    "storedProcedureName": "[meta].[usp_etl_log]",
+                    "storedProcedureParameters": {
+                      "action": {
+                        "value": "pipeline_end",
+                        "type": "String"
+                      },
+                      "controller_id": {
+                        "value": "",
+                        "type": "Int64"
+                      },
+                      "error_message": {
+                        "value": "",
+                        "type": "String"
+                      },
+                      "ingestion_config_id": {
+                        "value": "",
+                        "type": "Int64"
+                      },
+                      "load_type": {
+                        "value": "",
+                        "type": "String"
+                      },
+                      "log_id": {
+                        "value": {
+                          "value": "@variables('pipeline_log_id')",
+                          "type": "Expression"
+                        },
+                        "type": "Int64"
+                      },
+                      "pipeline_name": {
+                        "value": "",
+                        "type": "String"
+                      },
+                      "pipeline_run_id": {
+                        "value": {
+                          "value": "@pipeline().RunId",
+                          "type": "Expression"
+                        },
+                        "type": "String"
+                      },
+                      "rows_inserted": {
+                        "value": "",
+                        "type": "Int64"
+                      },
+                      "rows_read": {
+                        "value": "",
+                        "type": "Int64"
+                      },
+                      "target_table": {
+                        "value": "",
+                        "type": "String"
+                      },
+                      "watermark_from": {
+                        "value": "",
+                        "type": "String"
+                      },
+                      "watermark_to": {
+                        "value": "",
+                        "type": "String"
+                      }
+                    }
+                  },
+                  "linkedService": {
+                    "name": "insurance_warehouse_test",
+                    "properties": {
+                      "type": "DataWarehouse",
+                      "typeProperties": {
+                        "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+                        "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                        "workspaceId": "00000000-0000-0000-0000-000000000000"
+                      },
+                      "annotations": []
+                    }
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 2,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Log_End_Start_New_Master",
+                  "dependsOn": [
+                    {
+                      "activity": "Invoke_Master_Pipeline",
+                      "dependencyConditions": [
+                        "Succeeded"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "value": "RECOVER_AND_CONTINUE",
+              "activities": [
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {
+                      "failed_ingest_run_id": {
+                        "value": "@activity('Assess_Last_Master').output.resultSets[0].rows[0].first_failed_run_id",
+                        "type": "Expression"
+                      },
+                      "failed_transform_run_id": {
+                        "value": "@activity('Assess_Last_Master').output.resultSets[0].rows[0].first_failed_run_id",
+                        "type": "Expression"
+                      },
+                      "pipeline_name": {
+                        "value": "@activity('Assess_Last_Master').output.resultSets[0].rows[0].first_failed_pipeline_name",
+                        "type": "Expression"
+                      },
+                      "default_watermark": {
+                        "value": "@pipeline().parameters.default_watermark",
+                        "type": "Expression"
+                      },
+                      "pipeline_status": "Success",
+                      "first_failed_stage_order": "@string(activity('Assess_Last_Master').output.resultSets[0].rows[0].first_failed_stage_order)"
+                    },
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "f5d6af24-d3ac-9431-4c71-bf8f54afcdf8",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Invoke_Recover_Pipeline",
+                  "dependsOn": []
+                },
+                {
+                  "type": "Script",
+                  "typeProperties": {
+                    "scripts": [
+                      {
+                        "text": {
+                          "value": "/*\r\n  recovery_master_pipeline — main pipelines to run AFTER successful recovery.\r\n\r\n  Prerequisite: Set Variable var_first_failed_stage_order from Assess output\r\n    @activity('Assess_Last_Master').output.resultSets[0].rows[0].first_failed_stage_order\r\n\r\n  ForEach batchCount = 1.\r\n*/\r\n\r\nDECLARE @first_failed_stage_order INT = @{variables('var_first_failed_stage_order')};\r\n\r\nSELECT\r\n    main_pipeline_name,\r\n    stage_order\r\nFROM (VALUES\r\n    ('ingest_crm_to_bronze',    1),\r\n    ('ingest_policy_to_bronze', 2),\r\n    ('bronze_to_silver',        3),\r\n    ('silver_to_gold',          4)\r\n) AS stages(main_pipeline_name, stage_order)\r\nWHERE @first_failed_stage_order IS NOT NULL\r\n  AND stage_order > @first_failed_stage_order\r\nORDER BY stage_order;\r\n",
+                          "type": "Expression"
+                        },
+                        "type": "Query"
+                      }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                  },
+                  "linkedService": {
+                    "name": "insurance_warehouse_test",
+                    "properties": {
+                      "type": "DataWarehouse",
+                      "typeProperties": {
+                        "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+                        "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                        "workspaceId": "00000000-0000-0000-0000-000000000000"
+                      },
+                      "annotations": []
+                    }
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 2,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Lookup_Remaining",
+                  "dependsOn": [
+                    {
+                      "activity": "Invoke_Recover_Pipeline",
+                      "dependencyConditions": [
+                        "Succeeded"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {
+                      "first_failed_stage_order": {
+                        "value": "@string(activity('Assess_Last_Master').output.resultSets[0].rows[0].first_failed_stage_order)",
+                        "type": "Expression"
+                      },
+                      "load_type": "INCREMENTAL",
+                      "default_watermark": "1900-01-01T00:00:00Z"
+                    },
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "05ad8c45-d1a6-9f8b-4705-7f340cce7c8e",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Recovery_Master_Continue",
+                  "dependsOn": [
+                    {
+                      "activity": "Lookup_Remaining",
+                      "dependencyConditions": [
+                        "Succeeded"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "defaultActivities": []
+        },
+        "name": "Switch_Assess_Last_Master",
+        "dependsOn": [
+          {
+            "activity": "Set_Variable_Stage_Order",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SetVariable",
+        "typeProperties": {
+          "variableName": "var_first_failed_stage_order",
+          "value": {
+            "value": "@int(activity('Assess_Last_Master').output.resultSets[0].rows[0].first_failed_stage_order)",
+            "type": "Expression"
+          }
+        },
+        "policy": {
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Set_Variable_Stage_Order",
+        "dependsOn": [
+          {
+            "activity": "Assess_Last_Master",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "-- Script activity: Query — recovery_master_pipeline end\r\n-- Connection: Warehouse insurance_warehouse\r\n--\r\n-- Script parameters (Settings → Script parameters):\r\n--\r\n--   Name              Type    Value (dynamic content)\r\n--   ----------------  ------  ------------------------------------------\r\n--   pipeline_status   String  @variables('pipeline_status')\r\n--   log_id            Int64   @variables('pipeline_log_id')\r\n--   pipeline_run_id   String  @pipeline().RunId\r\n--   pipeline_name     String  @pipeline().parameters.recovery_master_pipeline_name\r\n--\r\n-- Set variables('pipeline_status') = Failed on failure branches before this activity.\r\n\r\n\r\nIF @pipeline_status = 'Failed'\r\nBEGIN\r\n    UPDATE meta.etl_execution_log\r\n    SET status   = 'Failed',\r\n        end_time = SYSDATETIME()\r\n    WHERE log_id = @log_id;\r\n\r\n    SELECT @log_id AS log_id;\r\nEND\r\nELSE\r\nBEGIN\r\n    EXEC meta.usp_etl_log\r\n        @action          = 'pipeline_end',\r\n        @pipeline_run_id = @pipeline_run_id,\r\n        @pipeline_name   = @pipeline_name,\r\n        @log_id          = @log_id;\r\nEND\r\n",
+                "type": "Expression"
+              },
+              "type": "Query",
+              "parameters": [
+                {
+                  "name": "pipeline_status",
+                  "type": "String",
+                  "value": "@variables('pipeline_status')",
+                  "direction": "Input"
+                },
+                {
+                  "name": "log_id",
+                  "type": "String",
+                  "value": "@variables('pipeline_log_id')",
+                  "direction": "Input"
+                },
+                {
+                  "name": "pipeline_run_id",
+                  "type": "String",
+                  "value": {
+                    "value": "@pipeline().RunId",
+                    "type": "Expression"
+                  },
+                  "direction": "Input"
+                },
+                {
+                  "name": "pipeline_name",
+                  "type": "String",
+                  "value": "@pipeline().parameters.recovery_master_pipeline_name",
+                  "direction": "Input"
+                }
+              ]
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "insurance_warehouse_test",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Script_Log_End_Success",
+        "dependsOn": [
+          {
+            "activity": "Switch_Assess_Last_Master",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "-- Script activity: Query — recovery_master_pipeline end\n-- Connection: Warehouse insurance_warehouse\n--\n-- Script parameters (Settings → Script parameters):\n--\n--   Name              Type    Value (dynamic content)\n--   ----------------  ------  ------------------------------------------\n--   pipeline_status   String  @variables('pipeline_status')\n--   log_id            Int64   @variables('pipeline_log_id')\n--   pipeline_run_id   String  @pipeline().RunId\n--   pipeline_name     String  @pipeline().parameters.recovery_master_pipeline_name\n--\n-- Set variables('pipeline_status') = Failed on failure branches before this activity.\n\nIF @pipeline_status = 'Failed'\nBEGIN\n    UPDATE meta.etl_execution_log\n    SET status   = 'Failed',\n        end_time = SYSDATETIME()\n    WHERE log_id = @log_id;\n    SELECT @log_id AS log_id;\nEND\nELSE\nBEGIN\n    EXEC meta.usp_etl_log\n        @action          = 'pipeline_end',\n        @pipeline_run_id = @pipeline_run_id,\n        @pipeline_name   = @pipeline_name,\n        @log_id          = @log_id;\nEND",
+                "type": "Expression"
+              },
+              "type": "Query",
+              "parameters": [
+                {
+                  "name": "pipeline_status",
+                  "type": "String",
+                  "value": "@variables('pipeline_status')",
+                  "direction": "Input"
+                },
+                {
+                  "name": "log_id",
+                  "type": "String",
+                  "value": "@variables('pipeline_log_id')",
+                  "direction": "Input"
+                },
+                {
+                  "name": "pipeline_run_id",
+                  "type": "String",
+                  "value": {
+                    "value": "@pipeline().RunId",
+                    "type": "Expression"
+                  },
+                  "direction": "Input"
+                },
+                {
+                  "name": "pipeline_name",
+                  "type": "String",
+                  "value": "@pipeline().parameters.recovery_master_pipeline_name",
+                  "direction": "Input"
+                }
+              ]
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "insurance_warehouse_test",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "db297df8-2356-b5dd-4b73-02bfbec559f0",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Script_Log_End_Failed",
+        "dependsOn": [
+          {
+            "activity": "Set_Pipeline_Status_End",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "SetVariable",
+        "typeProperties": {
+          "variableName": "pipeline_status",
+          "value": "Failed"
+        },
+        "policy": {
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Set_Pipeline_Status_End",
+        "dependsOn": [
+          {
+            "activity": "Switch_Assess_Last_Master",
+            "dependencyConditions": [
+              "Failed"
+            ]
+          }
+        ]
+      }
+    ],
+    "parameters": {
+      "recovery_master_pipeline_name": {
+        "type": "string",
+        "defaultValue": "recovery_master_pipeline"
+      },
+      "master_pipeline_name": {
+        "type": "string",
+        "defaultValue": "master_pipeline"
+      },
+      "error_status": {
+        "type": "string",
+        "defaultValue": "New"
+      },
+      "load_type": {
+        "type": "string",
+        "defaultValue": "INCREMENTAL"
+      },
+      "default_watermark": {
+        "type": "string",
+        "defaultValue": "1900-01-01T00:00:00Z"
+      }
+    },
+    "variables": {
+      "pipeline_log_id": {
+        "type": "Integer"
+      },
+      "var_first_failed_stage_order": {
+        "type": "Integer"
+      },
+      "pipeline_status": {
+        "type": "String",
+        "defaultValue": "Success"
+      }
+    }
+  }
+}

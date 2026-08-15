@@ -1,0 +1,183 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "Switch",
+        "typeProperties": {
+          "on": {
+            "value": "@pipeline().parameters.first_failed_stage_order",
+            "type": "Expression"
+          },
+          "cases": [
+            {
+              "value": "2",
+              "activities": [
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {
+                      "root_folder": "landing",
+                      "default_watermark": "@pipeline().parameters.default_watermark",
+                      "pipeline_name": "@pipeline().parameters.pipeline_name",
+                      "recover_pipeline_name": "recover_ingest_policy_to_bronze",
+                      "pipeline_status": "@pipeline().parameters.pipeline_status",
+                      "error_status": "New",
+                      "failed_ingest_run_id": "@pipeline().parameters.failed_ingest_run_id"
+                    },
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "d2b267bb-d0b7-acd0-4a27-282106dd99d0",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Recover_Ingest_Policy_To_Bronze",
+                  "dependsOn": []
+                }
+              ]
+            },
+            {
+              "value": "1",
+              "activities": [
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {
+                      "default_watermark": "@pipeline().parameters.default_watermark",
+                      "pipeline_status": "@pipeline().parameters.pipeline_status",
+                      "pipeline_name": "@pipeline().parameters.pipeline_name",
+                      "error_status": "New",
+                      "failed_ingest_run_id": "@pipeline().parameters.failed_ingest_run_id",
+                      "recover_pipeline_name": "recover_ingest_crm_to_bronze"
+                    },
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "42c27642-31ab-b899-4af6-d9c7f51971d5",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Recover_Ingest_Crm_To_Bronze",
+                  "dependsOn": []
+                }
+              ]
+            },
+            {
+              "value": "3",
+              "activities": [
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {
+                      "default_watermark": "@pipeline().parameters.default_watermark",
+                      "pipeline_name": "@pipeline().parameters.pipeline_name",
+                      "recover_pipeline_name": "recover_bronze_to_silver",
+                      "error_status": "New",
+                      "pipeline_status": "@pipeline().parameters.pipeline_status",
+                      "failed_transform_run_id": "@pipeline().parameters.failed_transform_run_id"
+                    },
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "1b0a68bb-6e3d-9f0b-4322-e26a437f032b",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Recover_Bronze_To_Silver",
+                  "dependsOn": []
+                }
+              ]
+            },
+            {
+              "value": "4",
+              "activities": [
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {
+                      "pipeline_name": "@pipeline().parameters.pipeline_name",
+                      "recover_pipeline_name": "recover_silver_to_gold",
+                      "default_watermark": "@pipeline().parameters.default_watermark",
+                      "error_status": "New",
+                      "failed_transform_run_id": "@pipeline().parameters.failed_transform_run_id",
+                      "pipeline_status": "@pipeline().parameters.pipeline_status"
+                    },
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "15bc7fcc-3148-b83b-4106-06b29cc66d99",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Recover_Silver_To_Gold",
+                  "dependsOn": []
+                }
+              ]
+            }
+          ],
+          "defaultActivities": []
+        },
+        "name": "Switch_Recover_Pipeline",
+        "dependsOn": []
+      }
+    ],
+    "parameters": {
+      "first_failed_stage_order": {
+        "type": "string",
+        "defaultValue": "3"
+      },
+      "failed_ingest_run_id": {
+        "type": "string",
+        "defaultValue": "TEST-FAILED-BRONZE-SILVER-RUN-001"
+      },
+      "failed_transform_run_id": {
+        "type": "string",
+        "defaultValue": "TEST-FAILED-BRONZE-SILVER-RUN-001"
+      },
+      "pipeline_name": {
+        "type": "string",
+        "defaultValue": "bronze_to_silver"
+      },
+      "default_watermark": {
+        "type": "string",
+        "defaultValue": "1900-01-01T00:00:00Z"
+      },
+      "pipeline_status": {
+        "type": "string",
+        "defaultValue": "Success"
+      }
+    }
+  }
+}

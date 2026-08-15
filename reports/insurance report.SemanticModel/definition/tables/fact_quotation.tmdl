@@ -1,0 +1,121 @@
+table fact_quotation
+	lineageTag: f07afa59-c9da-4cd0-a167-c8313da05700
+	sourceLineageTag: [gold].[fact_quotation]
+
+	column quotation_id
+		dataType: string
+		lineageTag: e89088ae-d969-4ac9-ba03-174440e0a4f8
+		sourceLineageTag: quotation_id
+		summarizeBy: none
+		sourceColumn: quotation_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 7b054dbf-9029-4286-aaa9-4e55266db30e
+		sourceLineageTag: quotation_date_key
+		summarizeBy: none
+		sourceColumn: quotation_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_expiry_date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 124af9b9-9697-4e9e-aa6a-447856029308
+		sourceLineageTag: quotation_expiry_date_key
+		summarizeBy: sum
+		sourceColumn: quotation_expiry_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 962c147d-f483-406a-ada2-475305b5a72e
+		sourceLineageTag: customer_key
+		summarizeBy: none
+		sourceColumn: customer_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 3660999f-fcb2-4e83-b5fa-7fed47267016
+		sourceLineageTag: agent_key
+		summarizeBy: none
+		sourceColumn: agent_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 1cf930bc-77c7-4af9-9d5b-efffff02e94e
+		sourceLineageTag: provider_key
+		summarizeBy: none
+		sourceColumn: provider_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_package_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 9a01f743-e2f1-4975-92fd-9b299a800fe3
+		sourceLineageTag: product_package_key
+		summarizeBy: none
+		sourceColumn: product_package_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_status_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 4a94c51a-0d5c-4b3a-8e80-7b4cd46dba72
+		sourceLineageTag: quotation_status_key
+		summarizeBy: none
+		sourceColumn: quotation_status_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_premium_amount
+		dataType: double
+		lineageTag: 5c9fcadf-4bf5-47fd-a861-18355ab41387
+		sourceLineageTag: quotation_premium_amount
+		summarizeBy: sum
+		sourceColumn: quotation_premium_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column fact_quotation_key
+		dataType: int64
+		formatString: 0
+		lineageTag: d3aae7e9-1c7a-490c-81ec-bf22b9ed55f4
+		sourceLineageTag: fact_quotation_key
+		summarizeBy: sum
+		sourceColumn: fact_quotation_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 35158a26-1802-4dd0-b1d7-393c0da99fa8
+		sourceLineageTag: vehicle_key
+		summarizeBy: none
+		sourceColumn: vehicle_key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_quotation = entity
+		mode: directLake
+		source
+			entityName: fact_quotation
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_etl_log_using_sparkSQL"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "c842b1be-37b0-866a-4219-93decff12cac"
+  }
+}

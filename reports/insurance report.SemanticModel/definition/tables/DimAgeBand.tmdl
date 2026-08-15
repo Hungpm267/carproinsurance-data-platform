@@ -1,0 +1,53 @@
+table DimAgeBand
+	lineageTag: f2d8e8d0-f4a4-4eb8-b551-1a878a77c71a
+
+	measure 'Total Quotation Premium' = SUM('Fact_Quotation'[quotation_premium_amount])
+		lineageTag: 14ee1821-b09d-44a3-b3d0-97be0f4f6012
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Top Agent Name' = ```
+			
+			CONCATENATEX(
+			    TOPN(1, ALL('Dim_Agent'), [Total Quotation], DESC),
+			    'Dim_Agent'[agent_name],
+			    ", "
+			)
+			
+			```
+		lineageTag: d582e678-d28a-420c-bf2c-40e1cea2b08c
+
+	column age_band
+		lineageTag: 41c20633-d0c4-4413-885f-9a2f34474759
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [age_band]
+
+		annotation SummarizationSetBy = Automatic
+
+	column age_band_sort
+		formatString: 0
+		lineageTag: 00b0d45f-e241-4e29-9151-fcfa36a6e41d
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [age_band_sort]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimAgeBand = calculated
+		mode: import
+		source =
+				
+				DATATABLE (
+				    "age_band",      STRING,
+				    "age_band_sort", INTEGER,
+				    {
+				        { "25-34", 1 },
+				        { "35-44", 2 },
+				        { "45-54", 3 },
+				        { "55+",   4 }
+				    }
+				)
+
+	annotation PBI_Id = 2f67b4b544d74a7ca963c7d3e97f2619
+

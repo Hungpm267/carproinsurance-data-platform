@@ -1,0 +1,324 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "InvokePipeline",
+        "typeProperties": {
+          "parameters": {
+            "default_watermark": "1900-01-01T00:00:00Z"
+          },
+          "waitOnCompletion": true,
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "pipelineId": "908dc137-7e4f-8c3a-4a38-8060a629f809",
+          "operationType": "InvokeFabricPipeline"
+        },
+        "externalReferences": {
+          "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Ingest_crm_to_bronze_pipeline",
+        "dependsOn": [
+          {
+            "activity": "If_initial_load",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "IfCondition",
+        "typeProperties": {
+          "expression": {
+            "value": "@pipeline().parameters.initial_load",
+            "type": "Expression"
+          },
+          "ifTrueActivities": [
+            {
+              "type": "TridentNotebook",
+              "typeProperties": {
+                "notebookId": "c4577eec-3ea2-99ba-4be4-4ffa85f581b2",
+                "workspaceId": "00000000-0000-0000-0000-000000000000"
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "Nb_init_lakehouse_schemas",
+              "dependsOn": []
+            },
+            {
+              "type": "TridentNotebook",
+              "typeProperties": {
+                "notebookId": "7913a88c-d21e-483b-be6e-5bfa2e403dd2",
+                "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "Nb_init_meta_schemas",
+              "state": "Inactive",
+              "onInactiveMarkAs": "Succeeded",
+              "dependsOn": [
+                {
+                  "activity": "Nb_init_lakehouse_schemas",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "SqlServerStoredProcedure",
+              "typeProperties": {
+                "storedProcedureName": "[meta].[sp_init_warehouse_schemas]"
+              },
+              "linkedService": {
+                "name": "insurance_warehouse",
+                "properties": {
+                  "type": "DataWarehouse",
+                  "typeProperties": {
+                    "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                    "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                    "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                  },
+                  "annotations": []
+                }
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "sp_init_warehouse_schemas",
+              "state": "Inactive",
+              "onInactiveMarkAs": "Succeeded",
+              "dependsOn": []
+            },
+            {
+              "type": "SqlServerStoredProcedure",
+              "typeProperties": {
+                "storedProcedureName": "[meta].[sp_init_meta_schemas]"
+              },
+              "linkedService": {
+                "name": "insurance_warehouse",
+                "properties": {
+                  "type": "DataWarehouse",
+                  "typeProperties": {
+                    "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                    "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                    "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                  },
+                  "annotations": []
+                }
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "sp_init_meta_schemas",
+              "state": "Inactive",
+              "onInactiveMarkAs": "Succeeded",
+              "dependsOn": [
+                {
+                  "activity": "sp_init_warehouse_schemas",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ]
+            }
+          ],
+          "ifFalseActivities": []
+        },
+        "name": "If_initial_load",
+        "dependsOn": []
+      },
+      {
+        "type": "InvokePipeline",
+        "typeProperties": {
+          "parameters": {
+            "root_folder": "landing",
+            "default_watermark": "2026-05-25"
+          },
+          "waitOnCompletion": true,
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "pipelineId": "99b34b15-1eb0-9804-4a38-b75c048c73c9",
+          "operationType": "InvokeFabricPipeline"
+        },
+        "externalReferences": {
+          "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Ingest_landing_to_bronze_pipeline",
+        "dependsOn": [
+          {
+            "activity": "If_initial_load",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "InvokePipeline",
+        "typeProperties": {
+          "parameters": {},
+          "waitOnCompletion": true,
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "pipelineId": "8041158f-a25c-9a74-44b6-d41fc1130890",
+          "operationType": "InvokeFabricPipeline"
+        },
+        "externalReferences": {
+          "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Transform_silver_to_gold_pipeline",
+        "dependsOn": [
+          {
+            "activity": "Transform_bronze_to_silver",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "InvokePipeline",
+        "typeProperties": {
+          "parameters": {},
+          "waitOnCompletion": true,
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "pipelineId": "3c4fe38a-03d4-b916-45ec-34bddd84605a",
+          "operationType": "InvokeFabricPipeline"
+        },
+        "externalReferences": {
+          "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Transform_bronze_to_silver",
+        "dependsOn": [
+          {
+            "activity": "refresh_metadata",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "WebActivity",
+        "typeProperties": {
+          "method": "POST",
+          "relativeUrl": "/v1/workspaces/e13dac5b-f5b1-4169-bb58-0f6d0bfea366/sqlEndpoints/5f22b528-3460-46a3-88ad-eac4f0695132/refreshMetadata",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "recreateTables": false,
+            "timeout": {
+              "timeUnit": "Minutes",
+              "value": 5
+            }
+          }
+        },
+        "externalReferences": {
+          "connection": "4d8dda6f-27d2-4356-a38a-4eced5aa6538"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Refresh metadata sql endpoint lakehouse api",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "38ac9d69-f0af-a775-446f-2d0f8467534e",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "lakehouse_id": {
+              "value": "5f22b528-3460-46a3-88ad-eac4f0695132",
+              "type": "string"
+            },
+            "workspace_id": {
+              "value": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "refresh_metadata",
+        "dependsOn": [
+          {
+            "activity": "Ingest_crm_to_bronze_pipeline",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
+          {
+            "activity": "Ingest_landing_to_bronze_pipeline",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      }
+    ],
+    "parameters": {
+      "initial_load": {
+        "type": "bool",
+        "defaultValue": false
+      }
+    },
+    "concurrency": 2
+  }
+}

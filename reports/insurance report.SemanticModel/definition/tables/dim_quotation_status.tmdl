@@ -1,0 +1,30 @@
+table dim_quotation_status
+	lineageTag: e138f5a9-b682-4264-9d98-12e13bdc6185
+	sourceLineageTag: [gold].[dim_quotation_status]
+
+	column quotation_status_key
+		dataType: int64
+		formatString: 0
+		lineageTag: bb88929b-a587-4c73-9528-62403ba00200
+		sourceLineageTag: quotation_status_key
+		summarizeBy: none
+		sourceColumn: quotation_status_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_status_name
+		dataType: string
+		lineageTag: f41d69e7-7435-498d-9565-9b8145e5d02d
+		sourceLineageTag: quotation_status_name
+		summarizeBy: none
+		sourceColumn: quotation_status_name
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_quotation_status = entity
+		mode: directLake
+		source
+			entityName: dim_quotation_status
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

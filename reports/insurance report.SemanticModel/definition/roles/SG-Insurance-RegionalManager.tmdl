@@ -1,0 +1,13 @@
+role SG-Insurance-RegionalManager
+	modelPermission: read
+
+	tablePermission dim_agent =
+			dim_agent[region]
+			=
+			LOOKUPVALUE(
+			    security_user_scope[region_name],
+			    security_user_scope[user_email], USERPRINCIPALNAME()
+			)
+
+	annotation PBI_Id = 40d57e29b7c54ea8ac1736635c0ac8ff
+

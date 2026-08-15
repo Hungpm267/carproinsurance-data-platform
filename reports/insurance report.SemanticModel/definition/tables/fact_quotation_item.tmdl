@@ -1,0 +1,62 @@
+table fact_quotation_item
+	lineageTag: c71a891d-bc4d-4b21-ba6c-9779a9cdaa04
+	sourceLineageTag: [gold].[fact_quotation_item]
+
+	column quotation_item_key
+		dataType: int64
+		formatString: 0
+		lineageTag: d48ccbdb-884e-4643-91e4-01ba2a3eefce
+		sourceLineageTag: quotation_item_key
+		summarizeBy: sum
+		sourceColumn: quotation_item_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_item_id
+		dataType: string
+		lineageTag: 72e3879f-e44a-4374-b00b-132d3f369537
+		sourceLineageTag: quotation_item_id
+		summarizeBy: none
+		sourceColumn: quotation_item_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column coverage_type_key
+		dataType: int64
+		formatString: 0
+		lineageTag: edf74a4d-7673-4f20-9a32-d1c09bad67d0
+		sourceLineageTag: coverage_type_key
+		summarizeBy: none
+		sourceColumn: coverage_type_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column coverage_amount
+		dataType: double
+		lineageTag: 369de835-943e-46a6-be0e-4a22f51aab73
+		sourceLineageTag: coverage_amount
+		summarizeBy: sum
+		sourceColumn: coverage_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column deductible_amount
+		dataType: double
+		lineageTag: 4cde7314-036e-44d3-b4bd-43acf30ce1da
+		sourceLineageTag: deductible_amount
+		summarizeBy: sum
+		sourceColumn: deductible_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fact_quotation_item = entity
+		mode: directLake
+		source
+			entityName: fact_quotation_item
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

@@ -1,0 +1,2060 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "Lookup",
+        "typeProperties": {
+          "source": {
+            "type": "DataWarehouseSource",
+            "partitionOption": "None",
+            "queryTimeout": "02:00:00"
+          },
+          "datasetSettings": {
+            "type": "DataWarehouseTable",
+            "typeProperties": {
+              "schema": "meta",
+              "table": "etl_ingestion_config"
+            },
+            "schema": [],
+            "linkedService": {
+              "name": "insurance_warehouse",
+              "properties": {
+                "type": "DataWarehouse",
+                "typeProperties": {
+                  "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                  "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                  "workspaceId": "00000000-0000-0000-0000-000000000000"
+                },
+                "annotations": []
+              }
+            },
+            "annotations": []
+          },
+          "firstRowOnly": false
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Lookup_etl_ingestion_config",
+        "description": "CRM copy list from meta.etl_ingestion_config",
+        "dependsOn": [
+          {
+            "activity": "script_Log_Pipeline_Start",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Filter",
+        "typeProperties": {
+          "items": {
+            "value": "@activity('Lookup_etl_ingestion_config').output.value",
+            "type": "Expression"
+          },
+          "condition": {
+            "value": "@equals(item().pipeline_name, 'ingest_crm_to_bronze')",
+            "type": "Expression"
+          }
+        },
+        "name": "Filter_crm_rows",
+        "dependsOn": [
+          {
+            "activity": "Lookup_etl_ingestion_config",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "ForEach",
+        "typeProperties": {
+          "isSequential": false,
+          "batchCount": 3,
+          "items": {
+            "value": "@activity('Filter_crm_rows').output.value",
+            "type": "Expression"
+          },
+          "activities": [
+            {
+              "type": "IfCondition",
+              "typeProperties": {
+                "expression": {
+                  "value": "@equals(toUpper(item().load_type), 'FULL')",
+                  "type": "Expression"
+                },
+                "ifTrueActivities": [
+                  {
+                    "type": "Copy",
+                    "typeProperties": {
+                      "source": {
+                        "type": "AzureSqlSource",
+                        "partitionOption": "None",
+                        "queryTimeout": "02:00:00",
+                        "datasetSettings": {
+                          "type": "AzureSqlTable",
+                          "typeProperties": {
+                            "schema": {
+                              "value": "@item().source_schema",
+                              "type": "Expression"
+                            },
+                            "table": {
+                              "value": "@item().source_table",
+                              "type": "Expression"
+                            },
+                            "database": "insurance_crm_db"
+                          },
+                          "schema": [],
+                          "externalReferences": {
+                            "connection": "3ebdb305-87c2-4f3f-963e-f546d2342f14"
+                          },
+                          "annotations": []
+                        }
+                      },
+                      "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "OverwriteSchema",
+                        "applyVOrder": false,
+                        "partitionOption": "None",
+                        "datasetSettings": {
+                          "type": "LakehouseTable",
+                          "typeProperties": {
+                            "schema": {
+                              "value": "@item().target_schema",
+                              "type": "Expression"
+                            },
+                            "table": {
+                              "value": "@item().target_table",
+                              "type": "Expression"
+                            }
+                          },
+                          "schema": [],
+                          "linkedService": {
+                            "name": "insurance_lakehouse",
+                            "properties": {
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "artifactId": "d70da340-541e-8b79-4ae0-18bd78024e7f",
+                                "workspaceId": "00000000-0000-0000-0000-000000000000",
+                                "rootFolder": "Tables"
+                              },
+                              "annotations": []
+                            }
+                          },
+                          "annotations": []
+                        }
+                      },
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      },
+                      "enableStaging": false
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Copy_FULL",
+                    "dependsOn": []
+                  },
+                  {
+                    "type": "TridentNotebook",
+                    "typeProperties": {
+                      "notebookId": "f2abebaf-8c6b-4384-bfff-ccd5d8de003c",
+                      "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+                      "parameters": {
+                        "action": {
+                          "value": "entity_success",
+                          "type": "string"
+                        },
+                        "log_id": {
+                          "value": {
+                            "value": "@activity('Log_Entity_Start').output",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "pipeline_run_id": {
+                          "value": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "pipeline_name": {
+                          "value": {
+                            "value": "@item().pipeline_name",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "controller_id": {
+                          "value": {
+                            "value": "@item().ingestion_config_id",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "ingestion_config_id": {
+                          "value": {
+                            "value": "@item().ingestion_config_id",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "load_type": {
+                          "value": {
+                            "value": "@item().load_type",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "target_schema": {
+                          "value": {
+                            "value": "@item().target_schema",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "target_table": {
+                          "value": {
+                            "value": "@item().target_table",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "watermark_column": {
+                          "value": {
+                            "value": "@item().watermark_column",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "watermark_from": {
+                          "value": {
+                            "value": "@variables('watermark')",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "rows_read": {
+                          "value": {
+                            "value": "@activity('Copy_FULL').output.rowsRead",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "rows_inserted": {
+                          "value": {
+                            "value": "0",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "auto_row_counts": {
+                          "value": "true",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 3,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Log_Entity_Success_Full",
+                    "state": "Inactive",
+                    "onInactiveMarkAs": "Succeeded",
+                    "dependsOn": []
+                  },
+                  {
+                    "type": "TridentNotebook",
+                    "typeProperties": {
+                      "notebookId": "f2abebaf-8c6b-4384-bfff-ccd5d8de003c",
+                      "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+                      "parameters": {
+                        "action": {
+                          "value": "entity_failed",
+                          "type": "string"
+                        },
+                        "log_id": {
+                          "value": {
+                            "value": "@activity('Log_Entity_Start').output",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "pipeline_name": {
+                          "value": {
+                            "value": "@item().pipeline_name",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "target_table": {
+                          "value": {
+                            "value": "@item().target_table",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "error_message": {
+                          "value": {
+                            "value": "@activity('Copy_FULL').error.message",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 3,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Log_Entity_Failed_Full",
+                    "state": "Inactive",
+                    "onInactiveMarkAs": "Succeeded",
+                    "dependsOn": []
+                  },
+                  {
+                    "type": "Fail",
+                    "typeProperties": {
+                      "message": {
+                        "value": "@activity('Copy_FULL').error.message",
+                        "type": "Expression"
+                      },
+                      "errorCode": {
+                        "value": "@activity('Copy_FULL').error.output",
+                        "type": "Expression"
+                      }
+                    },
+                    "name": "Fail_Full",
+                    "dependsOn": [
+                      {
+                        "activity": "script_log_entity_fail_full",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "SqlServerStoredProcedure",
+                    "typeProperties": {
+                      "storedProcedureName": "[meta].[usp_etl_log]",
+                      "storedProcedureParameters": {
+                        "action": {
+                          "value": "entity_success",
+                          "type": "String"
+                        },
+                        "log_id": {
+                          "value": {
+                            "value": "@activity('script_log_entity_start').output.resultSets[0].rows[0].log_id",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "auto_row_counts": {
+                          "value": "true",
+                          "type": "String"
+                        },
+                        "ingestion_config_id": {
+                          "value": {
+                            "value": "@item().ingestion_config_id",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "load_type": {
+                          "value": {
+                            "value": "@item().load_type",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "pipeline_name": {
+                          "value": {
+                            "value": "@item().pipeline_name",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "pipeline_run_id": {
+                          "value": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "watermark_column": {
+                          "value": {
+                            "value": "@item().watermark_column",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "watermark_from": {
+                          "value": {
+                            "value": "@variables('watermark')",
+                            "type": "Expression"
+                          },
+                          "type": "Single"
+                        },
+                        "target_schema": {
+                          "value": {
+                            "value": "@item().target_schema",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "rows_read": {
+                          "value": {
+                            "value": "@activity('Copy_FULL').output.rowsRead",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "rows_inserted": {
+                          "value": "0",
+                          "type": "Int16"
+                        },
+                        "controller_id": {
+                          "value": {
+                            "value": "@item().ingestion_config_id",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "target_table": {
+                          "value": {
+                            "value": "@item().target_table",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        }
+                      }
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "sp_Log_Entity_Success_Full",
+                    "state": "Inactive",
+                    "onInactiveMarkAs": "Succeeded",
+                    "dependsOn": []
+                  },
+                  {
+                    "type": "SqlServerStoredProcedure",
+                    "typeProperties": {
+                      "storedProcedureName": "[meta].[usp_etl_log]",
+                      "storedProcedureParameters": {
+                        "action": {
+                          "value": "entity_failed",
+                          "type": "String"
+                        },
+                        "error_message": {
+                          "value": {
+                            "value": "@activity('Copy_FULL').error.message",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "log_id": {
+                          "value": {
+                            "value": "@activity('script_log_entity_start').output.resultSets[0].rows[0].log_id",
+                            "type": "Expression"
+                          },
+                          "type": "Int64"
+                        },
+                        "pipeline_name": {
+                          "value": {
+                            "value": "@item().pipeline_name",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "target_table": {
+                          "value": {
+                            "value": "@item().target_table",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        }
+                      }
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "sp_log_entity_fail_full",
+                    "state": "Inactive",
+                    "onInactiveMarkAs": "Succeeded",
+                    "dependsOn": []
+                  },
+                  {
+                    "type": "Script",
+                    "typeProperties": {
+                      "scripts": [
+                        {
+                          "text": {
+                            "value": "EXEC meta.usp_etl_log \r\n    @action = 'entity_success',\r\n    @pipeline_run_id = @pipeline_run_id,\r\n    @pipeline_name = @pipeline_name,\r\n    @controller_id = @controller_id,\r\n    @log_id = @log_id,\r\n    @load_type = @load_type,\r\n    @rows_read = @rows_read,\r\n    @rows_inserted = @rows_read,\r\n    @watermark_from = NULL,\r\n    @watermark_to = NULL;",
+                            "type": "Expression"
+                          },
+                          "type": "Query",
+                          "parameters": [
+                            {
+                              "name": "pipeline_run_id",
+                              "type": "String",
+                              "value": {
+                                "value": "@{pipeline().RunId}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "pipeline_name",
+                              "type": "String",
+                              "value": "ingest_crm_to_bronze",
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "load_type",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().load_type}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "controller_id",
+                              "type": "Int64",
+                              "value": {
+                                "value": "@{item().ingestion_config_id}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "log_id",
+                              "type": "Int64",
+                              "value": {
+                                "value": "@activity('script_log_entity_start').output.resultSets[0].rows[0].log_id",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "rows_read",
+                              "type": "Int64",
+                              "value": {
+                                "value": "@activity('Copy_FULL').output.rowsRead",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            }
+                          ]
+                        }
+                      ],
+                      "scriptBlockExecutionTimeout": "02:00:00"
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 2,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "script_Log_Entity_Success_Full",
+                    "dependsOn": [
+                      {
+                        "activity": "Copy_FULL",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Script",
+                    "typeProperties": {
+                      "scripts": [
+                        {
+                          "text": {
+                            "value": "EXEC meta.usp_etl_log \r\n    @action = 'entity_failed',\r\n    @pipeline_run_id = @pipeline_run_id,\r\n    @pipeline_name = @pipeline_name,\r\n    @log_id = @log_id,\r\n    @target_table = @target_table,\r\n    @error_message = @error_message;",
+                            "type": "Expression"
+                          },
+                          "type": "Query",
+                          "parameters": [
+                            {
+                              "name": "pipeline_run_id",
+                              "type": "String",
+                              "value": {
+                                "value": "@{pipeline().RunId}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "pipeline_name",
+                              "type": "String",
+                              "value": "ingest_crm_to_bronze",
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "log_id",
+                              "type": "Int64",
+                              "value": {
+                                "value": "@activity('script_log_entity_start').output.resultSets[0].rows[0].log_id",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "target_table",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().target_table}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "error_message",
+                              "type": "String",
+                              "value": {
+                                "value": "@substring(replace(activity('Copy_FULL').error.message, '''', ''''''), 0, min(length(activity('Copy_FULL').error.message), 1900))",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            }
+                          ]
+                        }
+                      ],
+                      "scriptBlockExecutionTimeout": "02:00:00"
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "script_log_entity_fail_full",
+                    "dependsOn": [
+                      {
+                        "activity": "Copy_FULL",
+                        "dependencyConditions": [
+                          "Failed"
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "ifFalseActivities": [
+                  {
+                    "type": "Copy",
+                    "typeProperties": {
+                      "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": {
+                          "value": "@concat(\n'SELECT * FROM ', item().source_schema, '.', item().source_table,\n' WHERE ', item().watermark_column,\n' > ''', variables('watermark'), ''''\n)",
+                          "type": "Expression"
+                        },
+                        "partitionOption": "None",
+                        "queryTimeout": "02:00:00",
+                        "datasetSettings": {
+                          "type": "AzureSqlTable",
+                          "typeProperties": {
+                            "database": "insurance_crm_db"
+                          },
+                          "schema": [],
+                          "externalReferences": {
+                            "connection": "3ebdb305-87c2-4f3f-963e-f546d2342f14"
+                          },
+                          "annotations": []
+                        }
+                      },
+                      "sink": {
+                        "type": "LakehouseTableSink",
+                        "tableActionOption": "Append",
+                        "applyVOrder": false,
+                        "datasetSettings": {
+                          "type": "LakehouseTable",
+                          "typeProperties": {
+                            "schema": {
+                              "value": "@item().target_schema",
+                              "type": "Expression"
+                            },
+                            "table": {
+                              "value": "@item().target_table",
+                              "type": "Expression"
+                            }
+                          },
+                          "schema": [],
+                          "linkedService": {
+                            "name": "insurance_lakehouse",
+                            "properties": {
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "artifactId": "d70da340-541e-8b79-4ae0-18bd78024e7f",
+                                "workspaceId": "00000000-0000-0000-0000-000000000000",
+                                "rootFolder": "Tables"
+                              },
+                              "annotations": []
+                            }
+                          },
+                          "annotations": []
+                        }
+                      },
+                      "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                          "allowDataTruncation": true,
+                          "treatBooleanAsNumber": false
+                        }
+                      },
+                      "enableStaging": false
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Copy_INCREMENTAL",
+                    "dependsOn": [
+                      {
+                        "activity": "Set_watermark",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "SetVariable",
+                    "typeProperties": {
+                      "variableName": "watermark",
+                      "value": {
+                        "value": "@coalesce(string(item().last_watermark), pipeline().parameters.default_watermark)",
+                        "type": "Expression"
+                      }
+                    },
+                    "policy": {
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Set_watermark",
+                    "dependsOn": []
+                  },
+                  {
+                    "type": "TridentNotebook",
+                    "typeProperties": {
+                      "notebookId": "f2abebaf-8c6b-4384-bfff-ccd5d8de003c",
+                      "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+                      "parameters": {
+                        "action": {
+                          "value": "entity_success",
+                          "type": "string"
+                        },
+                        "log_id": {
+                          "value": {
+                            "value": "@activity('Log_Entity_Start').output.result.exitValue",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "pipeline_run_id": {
+                          "value": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "pipeline_name": {
+                          "value": {
+                            "value": "@item().pipeline_name",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "controller_id": {
+                          "value": {
+                            "value": "@item().ingestion_config_id",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "ingestion_config_id": {
+                          "value": {
+                            "value": "@item().ingestion_config_id",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "load_type": {
+                          "value": {
+                            "value": "@item().load_type",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "target_schema": {
+                          "value": {
+                            "value": "@item().target_schema",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "target_table": {
+                          "value": {
+                            "value": "@item().target_table",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "watermark_column": {
+                          "value": {
+                            "value": "@item().watermark_column",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "watermark_from": {
+                          "value": {
+                            "value": "@variables('watermark')",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "rows_read": {
+                          "value": {
+                            "value": "@activity('Copy_INCREMENTAL').output.rowsRead",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "rows_inserted": {
+                          "value": {
+                            "value": "0",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "auto_row_counts": {
+                          "value": "true",
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 3,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Log_Entity_Success_Incremental",
+                    "state": "Inactive",
+                    "onInactiveMarkAs": "Succeeded",
+                    "dependsOn": [
+                      {
+                        "activity": "Copy_INCREMENTAL",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "TridentNotebook",
+                    "typeProperties": {
+                      "notebookId": "f2abebaf-8c6b-4384-bfff-ccd5d8de003c",
+                      "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+                      "parameters": {
+                        "action": {
+                          "value": "entity_failed",
+                          "type": "string"
+                        },
+                        "log_id": {
+                          "value": {
+                            "value": "@activity('Log_Entity_Start').output.result.exitValue",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "pipeline_name": {
+                          "value": {
+                            "value": "@item().pipeline_name",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "target_table": {
+                          "value": {
+                            "value": "@item().target_table",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        },
+                        "error_message": {
+                          "value": {
+                            "value": "@activity('Copy_INCREMENTAL').error.message",
+                            "type": "Expression"
+                          },
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 3,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "Log_Entity_Failed_Incremental",
+                    "state": "Inactive",
+                    "onInactiveMarkAs": "Succeeded",
+                    "dependsOn": [
+                      {
+                        "activity": "Copy_INCREMENTAL",
+                        "dependencyConditions": [
+                          "Failed"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Fail",
+                    "typeProperties": {
+                      "message": {
+                        "value": "@activity('Copy_INCREMENTAL').error.message",
+                        "type": "Expression"
+                      },
+                      "errorCode": {
+                        "value": "@activity('Copy_INCREMENTAL').error.output",
+                        "type": "Expression"
+                      }
+                    },
+                    "name": "Fail_Incremental",
+                    "dependsOn": [
+                      {
+                        "activity": "Log_Entity_Failed_Incremental",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      },
+                      {
+                        "activity": "sp_Log_Entity_Failed_Incremental",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      },
+                      {
+                        "activity": "script_Log_Entity_Failed_Incremental",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "SqlServerStoredProcedure",
+                    "typeProperties": {
+                      "storedProcedureName": "[meta].[usp_etl_log]",
+                      "storedProcedureParameters": {
+                        "action": {
+                          "value": "entity_success",
+                          "type": "String"
+                        },
+                        "log_id": {
+                          "value": {
+                            "value": "@activity('script_log_entity_start').output.resultSets[0].rows[0].log_id",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "pipeline_run_id": {
+                          "value": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "pipeline_name": {
+                          "value": {
+                            "value": "@item().pipeline_name",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "controller_id": {
+                          "value": {
+                            "value": "@item().ingestion_config_id",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "ingestion_config_id": {
+                          "value": {
+                            "value": "@item().ingestion_config_id",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "load_type": {
+                          "value": {
+                            "value": "@item().load_type",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "target_schema": {
+                          "value": {
+                            "value": "@item().target_schema",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "target_table": {
+                          "value": {
+                            "value": "@item().target_table",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "watermark_column": {
+                          "value": {
+                            "value": "@variables('watermark')",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "watermark_from": {
+                          "value": {
+                            "value": "@variables('watermark')",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "rows_read": {
+                          "value": {
+                            "value": "@activity('Copy_INCREMENTAL').output.rowsRead",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "rows_inserted": {
+                          "value": "0",
+                          "type": "String"
+                        },
+                        "auto_row_counts": {
+                          "value": "true",
+                          "type": "String"
+                        }
+                      }
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "sp_Log_Entity_Success_Incremental",
+                    "state": "Inactive",
+                    "onInactiveMarkAs": "Succeeded",
+                    "dependsOn": [
+                      {
+                        "activity": "Copy_INCREMENTAL",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "SqlServerStoredProcedure",
+                    "typeProperties": {
+                      "storedProcedureName": "[meta].[usp_etl_log]",
+                      "storedProcedureParameters": {
+                        "action": {
+                          "value": "entity_failed",
+                          "type": "String"
+                        },
+                        "log_id": {
+                          "value": {
+                            "value": "@activity('script_log_entity_start').output.resultSets[0].rows[0].log_id",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "pipeline_name": {
+                          "value": {
+                            "value": "@item().pipeline_name",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "target_table": {
+                          "value": {
+                            "value": "@item().target_table",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        },
+                        "error_message": {
+                          "value": {
+                            "value": "@activity('Copy_INCREMENTAL').error.message",
+                            "type": "Expression"
+                          },
+                          "type": "String"
+                        }
+                      }
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 0,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "sp_Log_Entity_Failed_Incremental",
+                    "state": "Inactive",
+                    "onInactiveMarkAs": "Succeeded",
+                    "dependsOn": [
+                      {
+                        "activity": "Copy_INCREMENTAL",
+                        "dependencyConditions": [
+                          "Failed"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Script",
+                    "typeProperties": {
+                      "scripts": [
+                        {
+                          "text": {
+                            "value": "DECLARE @calculated_watermark_to NVARCHAR(50) = 'NULL';\n\nIF @load_type != 'FULL' AND @watermark_column IS NOT NULL\nBEGIN\n    DECLARE @sql NVARCHAR(MAX);\n    DECLARE @param_definition NVARCHAR(500) = N'@res NVARCHAR(50) OUTPUT';\n    \n    SET @sql = N'SELECT @res = CAST(MAX([' + REPLACE(@watermark_column, '''', '''''') + ']) AS NVARCHAR(50)) FROM [' + REPLACE(@target_schema, '''', '''''') + '].[' + REPLACE(@target_table, '''', '''''') + ']';\n    \n    EXEC sp_executesql @sql, @param_definition, @res = @calculated_watermark_to OUTPUT;\nEND\n\n-- Gọi Procedure log với các tham số sạch\nEXEC meta.usp_etl_log \n    @action = 'entity_success',\n    @pipeline_run_id = @pipeline_run_id,\n    @pipeline_name = @pipeline_name,\n    @controller_id = @controller_id,\n    @log_id = @log_id,\n    @load_type = @load_type,\n    @rows_read = @rows_read,\n    @rows_inserted = @rows_read, \n    @watermark_from = @watermark_from,\n    @watermark_to = @calculated_watermark_to;",
+                            "type": "Expression"
+                          },
+                          "type": "Query",
+                          "parameters": [
+                            {
+                              "name": "load_type",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().load_type}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "watermark_column",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().watermark_column}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "target_schema",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().target_schema}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "target_table",
+                              "type": "String",
+                              "value": {
+                                "value": "@{item().target_table}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "pipeline_run_id",
+                              "type": "String",
+                              "value": {
+                                "value": "@{pipeline().RunId}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "pipeline_name",
+                              "type": "String",
+                              "value": "ingest_crm_to_bronze",
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "controller_id",
+                              "type": "Int64",
+                              "value": {
+                                "value": "@{item().ingestion_config_id}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "log_id",
+                              "type": "Int64",
+                              "value": {
+                                "value": "@activity('script_log_entity_start').output.resultSets[0].rows[0].log_id",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "rows_read",
+                              "type": "Int64",
+                              "value": {
+                                "value": "@activity('Copy_INCREMENTAL').output.rowsRead",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            },
+                            {
+                              "name": "watermark_from",
+                              "type": "String",
+                              "value": {
+                                "value": "@{variables('watermark')}",
+                                "type": "Expression"
+                              },
+                              "direction": "Input"
+                            }
+                          ]
+                        }
+                      ],
+                      "scriptBlockExecutionTimeout": "02:00:00"
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 3,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "script_Log_Entity_Success_Incremental",
+                    "dependsOn": [
+                      {
+                        "activity": "Copy_INCREMENTAL",
+                        "dependencyConditions": [
+                          "Succeeded"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Script",
+                    "typeProperties": {
+                      "scripts": [
+                        {
+                          "text": {
+                            "value": "EXEC meta.usp_etl_log \r\n    @action = 'entity_failed',\r\n    @pipeline_run_id = '@{pipeline().RunId}',\r\n    @pipeline_name = 'ingest_crm_to_bronze',\r\n    @log_id = @activity('script_log_entity_start').output.resultSets[0].rows[0].log_id,\r\n    @target_table = '@{item().target_table}',\r\n    @error_message = '@{substring(replace(activity('Copy_INCREMENTAL').error.message, '''', ''''''), 0, min(length(activity('Copy_INCREMENTAL').error.message), 1900))}';",
+                            "type": "Expression"
+                          },
+                          "type": "Query"
+                        }
+                      ],
+                      "scriptBlockExecutionTimeout": "02:00:00"
+                    },
+                    "linkedService": {
+                      "name": "insurance_warehouse",
+                      "properties": {
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                          "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                          "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "policy": {
+                      "timeout": "0.12:00:00",
+                      "retry": 3,
+                      "retryIntervalInSeconds": 30,
+                      "secureInput": false,
+                      "secureOutput": false
+                    },
+                    "name": "script_Log_Entity_Failed_Incremental",
+                    "dependsOn": [
+                      {
+                        "activity": "Copy_INCREMENTAL",
+                        "dependencyConditions": [
+                          "Failed"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "name": "If_load_type",
+              "dependsOn": [
+                {
+                  "activity": "script_log_entity_start",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "TridentNotebook",
+              "typeProperties": {
+                "notebookId": "f2abebaf-8c6b-4384-bfff-ccd5d8de003c",
+                "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+                "parameters": {
+                  "action": {
+                    "value": "entity_start",
+                    "type": "string"
+                  },
+                  "pipeline_run_id": {
+                    "value": {
+                      "value": "@pipeline().RunId",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "pipeline_name": {
+                    "value": {
+                      "value": "@item().pipeline_name",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "controller_id": {
+                    "value": {
+                      "value": "@item().ingestion_config_id",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "watermark_from": {
+                    "value": {
+                      "value": "@coalesce(item().last_watermark, pipeline().parameters.default_watermark)",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  }
+                }
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "Log_Entity_Start",
+              "state": "Inactive",
+              "onInactiveMarkAs": "Succeeded",
+              "dependsOn": []
+            },
+            {
+              "type": "SqlServerStoredProcedure",
+              "typeProperties": {
+                "storedProcedureName": "[meta].[usp_etl_log]",
+                "storedProcedureParameters": {
+                  "action": {
+                    "value": "entity_start",
+                    "type": "String"
+                  },
+                  "controller_id": {
+                    "value": {
+                      "value": "@item().ingestion_config_id",
+                      "type": "Expression"
+                    },
+                    "type": "Int64"
+                  },
+                  "pipeline_name": {
+                    "value": {
+                      "value": "@item().pipeline_name",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "pipeline_run_id": {
+                    "value": {
+                      "value": "@pipeline().RunId",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  },
+                  "watermark_from": {
+                    "value": {
+                      "value": "@coalesce(item().last_watermark, pipeline().parameters.default_watermark)",
+                      "type": "Expression"
+                    },
+                    "type": "String"
+                  }
+                }
+              },
+              "linkedService": {
+                "name": "insurance_warehouse",
+                "properties": {
+                  "type": "DataWarehouse",
+                  "typeProperties": {
+                    "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+                    "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                    "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+                  },
+                  "annotations": []
+                }
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "sp_log_entity_start",
+              "state": "Inactive",
+              "onInactiveMarkAs": "Succeeded",
+              "dependsOn": []
+            },
+            {
+              "type": "Script",
+              "typeProperties": {
+                "scripts": [
+                  {
+                    "text": {
+                      "value": "EXEC meta.usp_etl_log \n    @action = 'entity_start',\n    @pipeline_run_id = '@{pipeline().RunId}',\n    @pipeline_name = 'ingest_crm_to_bronze',\n    @controller_id = @{item().ingestion_config_id},\n    @watermark_from = @{if(empty(item().last_watermark), 'NULL', concat('''', replace(item().last_watermark, '''', ''''''), ''''))};",
+                      "type": "Expression"
+                    },
+                    "type": "Query"
+                  }
+                ],
+                "scriptBlockExecutionTimeout": "02:00:00"
+              },
+              "linkedService": {
+                "name": "insurance_warehouse",
+                "properties": {
+                  "type": "DataWarehouse",
+                  "typeProperties": {
+                    "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+                    "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+                    "workspaceId": "00000000-0000-0000-0000-000000000000"
+                  },
+                  "annotations": []
+                }
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "script_log_entity_start",
+              "dependsOn": []
+            }
+          ]
+        },
+        "name": "ForEach_crm_entities",
+        "dependsOn": [
+          {
+            "activity": "Filter_crm_rows",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "f2abebaf-8c6b-4384-bfff-ccd5d8de003c",
+          "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+          "parameters": {
+            "action": {
+              "value": "pipeline_start",
+              "type": "string"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "pipeline_name": {
+              "value": "ingest_crm_to_bronze",
+              "type": "string"
+            },
+            "controller_id": {
+              "value": "0",
+              "type": "int"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 3,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Log_Pipeline_Start",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "f2abebaf-8c6b-4384-bfff-ccd5d8de003c",
+          "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+          "parameters": {
+            "action": {
+              "value": "pipeline_end",
+              "type": "string"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('Log_Pipeline_Start').output.result.exitValue",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "pipeline_status": {
+              "value": "Success",
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 3,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Log_Pipeline_End_Success",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "f2abebaf-8c6b-4384-bfff-ccd5d8de003c",
+          "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366",
+          "parameters": {
+            "action": {
+              "value": "pipeline_end",
+              "type": "string"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('Log_Pipeline_Start').output.result.exitValue",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "pipeline_status": {
+              "value": "Failed",
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 3,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Log_Pipeline_End_Failed",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_log]",
+          "storedProcedureParameters": {
+            "action": {
+              "value": "pipeline_start",
+              "type": "String"
+            },
+            "controller_id": {
+              "value": "0",
+              "type": "Int64"
+            },
+            "pipeline_name": {
+              "value": "ingest_crm_to_bronze",
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "sp_Log_Pipeline_Start",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_log]",
+          "storedProcedureParameters": {
+            "action": {
+              "value": "pipeline_end",
+              "type": "String"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('sp_Log_Pipeline_Start').output.resultSets[0].rows[0].log_id",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "pipeline_status": {
+              "value": "Success",
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "sp_Log_Pipeline_End_Success",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
+      },
+      {
+        "type": "SqlServerStoredProcedure",
+        "typeProperties": {
+          "storedProcedureName": "[meta].[usp_etl_log]",
+          "storedProcedureParameters": {
+            "action": {
+              "value": "pipeline_end",
+              "type": "String"
+            },
+            "log_id": {
+              "value": {
+                "value": "@activity('sp_Log_Pipeline_Start').output.resultSets[0].rows[0].log_id",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "pipelin_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "String"
+            },
+            "pipeline_status": {
+              "value": "Failed",
+              "type": "String"
+            }
+          }
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "6974ed4f-b005-438b-90f4-40e710f24a18",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "e13dac5b-f5b1-4169-bb58-0f6d0bfea366"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "sp_Log_Pipeline_End_Failed",
+        "state": "Inactive",
+        "onInactiveMarkAs": "Succeeded",
+        "dependsOn": []
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "EXEC meta.usp_etl_log \r\n    @action = 'pipeline_start',\r\n    @pipeline_run_id = '@{pipeline().RunId}',\r\n    @pipeline_name = 'ingest_crm_to_bronze',\r\n    @controller_id = 0,\r\n    @watermark_from = NULL;",
+                "type": "Expression"
+              },
+              "type": "Query"
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "script_Log_Pipeline_Start",
+        "dependsOn": []
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "EXEC meta.usp_etl_log \r\n    @action = 'pipeline_end',\r\n    @pipeline_run_id = @pipeline_run_id,\r\n    @pipeline_name = @pipeline_name,\r\n    @log_id = @log_id,\r\n    @error_message = NULL; ",
+                "type": "Expression"
+              },
+              "type": "Query",
+              "parameters": [
+                {
+                  "name": "pipeline_run_id",
+                  "type": "String",
+                  "value": {
+                    "value": "@{pipeline().RunId}",
+                    "type": "Expression"
+                  },
+                  "direction": "Input"
+                },
+                {
+                  "name": "pipeline_name",
+                  "type": "String",
+                  "value": "ingest_crm_to_bronze",
+                  "direction": "Input"
+                },
+                {
+                  "name": "log_id",
+                  "type": "Int64",
+                  "value": {
+                    "value": "@activity('script_Log_Pipeline_Start').output.resultSets[0].rows[0].log_id",
+                    "type": "Expression"
+                  },
+                  "direction": "Input"
+                }
+              ]
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "script_Log_Pipeline_End_Success",
+        "dependsOn": [
+          {
+            "activity": "ForEach_crm_entities",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Script",
+        "typeProperties": {
+          "scripts": [
+            {
+              "text": {
+                "value": "EXEC meta.usp_etl_log \r\n    @action = 'pipeline_end',\r\n    @pipeline_run_id = @pipeline_run_id,\r\n    @pipeline_name = @pipeline_name,\r\n    @log_id = @log_id,\r\n    @error_message = 'Pipeline failed';",
+                "type": "Expression"
+              },
+              "type": "Query",
+              "parameters": [
+                {
+                  "name": "pipeline_run_id",
+                  "type": "String",
+                  "value": {
+                    "value": "@{pipeline().RunId}",
+                    "type": "Expression"
+                  },
+                  "direction": "Input"
+                },
+                {
+                  "name": "pipeline_name",
+                  "type": "String",
+                  "value": "ingest_crm_to_bronze",
+                  "direction": "Input"
+                },
+                {
+                  "name": "log_id",
+                  "type": "Int64",
+                  "value": {
+                    "value": "@activity('script_Log_Pipeline_Start').output.resultSets[0].rows[0].log_id",
+                    "type": "Expression"
+                  },
+                  "direction": "Input"
+                }
+              ]
+            }
+          ],
+          "scriptBlockExecutionTimeout": "02:00:00"
+        },
+        "linkedService": {
+          "name": "insurance_warehouse",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "artifactId": "10f24a18-40e7-90f4-438b-b0056974ed4f",
+              "endpoint": "3ukzqa5oadlurln3behjhxf4ae-lowd3ynr6vuudo2yb5wqx7vdmy.datawarehouse.fabric.microsoft.com",
+              "workspaceId": "00000000-0000-0000-0000-000000000000"
+            },
+            "annotations": []
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "script_Log_Pipeline_End_Failed",
+        "dependsOn": [
+          {
+            "activity": "ForEach_crm_entities",
+            "dependencyConditions": [
+              "Failed"
+            ]
+          }
+        ]
+      }
+    ],
+    "parameters": {
+      "default_watermark": {
+        "type": "string",
+        "defaultValue": "1900-01-01T00:00:00Z"
+      }
+    },
+    "variables": {
+      "watermark": {
+        "type": "String",
+        "defaultValue": "1900-01-01T00:00:00Z"
+      },
+      "load_type": {
+        "type": "String"
+      },
+      "pipeline_log_id": {
+        "type": "Integer"
+      },
+      "entity_log_id": {
+        "type": "Integer"
+      }
+    }
+  }
+}

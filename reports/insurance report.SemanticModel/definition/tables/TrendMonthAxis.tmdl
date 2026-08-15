@@ -1,0 +1,47 @@
+table TrendMonthAxis
+	lineageTag: 45aef981-e45f-4302-bdcf-715765fb4f81
+
+	column Month
+		lineageTag: 227688be-f343-48c9-a4c5-11d340dd8b5a
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Month]
+		sortByColumn: 'Month Number'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Number'
+		formatString: 0
+		lineageTag: 6653c5c7-40ab-4476-b126-4b56f5d47199
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Month Number]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition TrendMonthAxis = calculated
+		mode: import
+		source = ```
+				
+				DATATABLE(
+				    "Month Number", INTEGER, 
+				    "Month", STRING,
+				    {
+				        {1, "Jan"},
+				        {2, "Feb"},
+				        {3, "Mar"},
+				        {4, "Apr"},
+				        {5, "May"},
+				        {6, "Jun"},
+				        {7, "Jul"},
+				        {8, "Aug"},
+				        {9, "Sep"},
+				        {10, "Oct"},
+				        {11, "Nov"},
+				        {12, "Dec"}
+				    }
+				)
+				```
+
+	annotation PBI_Id = e1fb2374ec074300be51d2e954ad4d6e
+

@@ -1,0 +1,44 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation PBI_QueryOrder = ["DirectLake - insurance_lakehouse"]
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_ProTooling = ["DirectLakeOnOneLakeInWeb","WebModelingEdit"]
+
+ref table dim_product_package
+ref table dim_policy_status
+ref table dim_insurance_provider
+ref table dim_coverage_type
+ref table dim_customer
+ref table fact_policy
+ref table fact_payment
+ref table fact_cancellation
+ref table dim_quotation_status
+ref table dim_vehicle
+ref table dim_agent
+ref table dim_payment_method
+ref table dim_date
+ref table dim_payment_status
+ref table fact_quotation_item
+ref table dim_cancellation_reason
+ref table fact_quotation
+ref table _Measures
+ref table Quotation_Funnel_Stages
+ref table TrendMonthAxis
+ref table DimMonth
+ref table Dim_Date_Trend
+ref table DimAgeBand
+ref table security_user_scope
+
+ref role SG-Insurance-Executive
+ref role SG-Insurance-Agent
+ref role SG-Insurance-BranchManager
+ref role SG-Insurance-RegionalManager
+

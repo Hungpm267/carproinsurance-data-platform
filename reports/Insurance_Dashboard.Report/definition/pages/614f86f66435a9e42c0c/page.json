@@ -1,0 +1,21 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "614f86f66435a9e42c0c",
+  "displayName": "Regional Analysis",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "pageBinding": {
+    "name": "08b6131ea00b828e0430",
+    "type": "Default",
+    "parameters": [],
+    "acceptsFilterContext": "None"
+  },
+  "visualInteractions": [
+    {
+      "source": "c725c017744541b72b19",
+      "target": "6000a7a58997dd679e00",
+      "type": "DataFilter"
+    }
+  ]
+}

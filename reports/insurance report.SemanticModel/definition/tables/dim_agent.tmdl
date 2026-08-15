@@ -1,0 +1,105 @@
+table dim_agent
+	lineageTag: 011b56bd-9a2f-4621-89a7-c4e75099b997
+	sourceLineageTag: [gold].[dim_agent]
+
+	column agent_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 4ca9d084-6b0c-4c4e-8ebe-e5a75e877ddd
+		sourceLineageTag: agent_key
+		summarizeBy: none
+		sourceColumn: agent_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_id
+		dataType: string
+		lineageTag: 53a3a409-b8f0-46b9-8e24-87f6f16ac5e6
+		sourceLineageTag: agent_id
+		summarizeBy: none
+		sourceColumn: agent_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_name
+		dataType: string
+		lineageTag: 165a7831-d02f-4d42-90eb-9cf4ce17b493
+		sourceLineageTag: agent_name
+		summarizeBy: none
+		sourceColumn: agent_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column region
+		dataType: string
+		lineageTag: 8cfa7bb0-42b6-4593-8b53-26026a60f84f
+		sourceLineageTag: region
+		summarizeBy: none
+		sourceColumn: region
+
+		annotation SummarizationSetBy = Automatic
+
+	column branch
+		dataType: string
+		lineageTag: 813e168e-7912-41cf-94e7-49c383026dc8
+		sourceLineageTag: branch
+		summarizeBy: none
+		sourceColumn: branch
+
+		annotation SummarizationSetBy = Automatic
+
+	column manager_name
+		dataType: string
+		lineageTag: 94fbc101-3300-40a5-8588-cb24b6956002
+		sourceLineageTag: manager_name
+		summarizeBy: none
+		sourceColumn: manager_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column effective_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 97c8ba53-a73b-4b3b-81d9-c620cdd2c38c
+		sourceLineageTag: effective_date
+		summarizeBy: none
+		sourceColumn: effective_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column expiry_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: b84f9dee-1d22-4dab-b8ce-c8f56af622d4
+		sourceLineageTag: expiry_date
+		summarizeBy: none
+		sourceColumn: expiry_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_current
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: f3fcd1f0-de6a-4db8-886d-348630bd0888
+		sourceLineageTag: is_current
+		summarizeBy: none
+		sourceColumn: is_current
+
+		annotation SummarizationSetBy = Automatic
+
+	column row_hash
+		dataType: string
+		lineageTag: 0465ce93-1433-418d-95a0-77f03778ab77
+		sourceLineageTag: row_hash
+		summarizeBy: none
+		sourceColumn: row_hash
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_agent = entity
+		mode: directLake
+		source
+			entityName: dim_agent
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

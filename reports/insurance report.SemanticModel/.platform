@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "insurance report"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "ea1d415a-7691-8b21-49fd-421b3ecd5587"
+  }
+}

@@ -1,0 +1,30 @@
+table dim_product_package
+	lineageTag: fe20cde6-ce43-4aa1-863b-59f725f9b6ac
+	sourceLineageTag: [gold].[dim_product_package]
+
+	column product_package_key
+		dataType: int64
+		formatString: 0
+		lineageTag: f2a53982-4391-4e3b-8ee6-6e65e185f620
+		sourceLineageTag: product_package_key
+		summarizeBy: none
+		sourceColumn: product_package_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_package_name
+		dataType: string
+		lineageTag: 9b2cd0b1-cd53-4e83-aebe-e5d16e6776f9
+		sourceLineageTag: product_package_name
+		summarizeBy: none
+		sourceColumn: product_package_name
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_product_package = entity
+		mode: directLake
+		source
+			entityName: dim_product_package
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

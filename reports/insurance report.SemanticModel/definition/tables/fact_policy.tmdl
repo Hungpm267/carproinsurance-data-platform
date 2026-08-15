@@ -1,0 +1,161 @@
+table fact_policy
+	lineageTag: 6f1763fe-b3ae-4baf-9146-084cb93155b6
+	sourceLineageTag: [gold].[fact_policy]
+
+	column policy_id
+		dataType: string
+		lineageTag: b36eb2c9-e09c-4cab-8c7b-74277572247b
+		sourceLineageTag: policy_id
+		summarizeBy: none
+		sourceColumn: policy_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_id
+		dataType: string
+		lineageTag: 99c8edf4-8760-4339-9161-98e362fa3105
+		sourceLineageTag: quotation_id
+		summarizeBy: none
+		sourceColumn: quotation_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_number
+		dataType: string
+		lineageTag: c2ae71d8-17af-4b0c-9e70-5e86ab74d735
+		sourceLineageTag: policy_number
+		summarizeBy: none
+		sourceColumn: policy_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_start_date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 101a4e0c-02ea-4311-95da-50285e3c2e84
+		sourceLineageTag: policy_start_date_key
+		summarizeBy: sum
+		sourceColumn: policy_start_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_end_date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 14d5e808-643a-4dec-ac27-f157984930b3
+		sourceLineageTag: policy_end_date_key
+		summarizeBy: sum
+		sourceColumn: policy_end_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column issued_date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 0ce914ac-4442-4a63-8f70-32f5148024d9
+		sourceLineageTag: issued_date_key
+		summarizeBy: none
+		sourceColumn: issued_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 08ae250d-0a48-4a15-b48d-bd32095574d6
+		sourceLineageTag: customer_key
+		summarizeBy: none
+		sourceColumn: customer_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 4bfff344-cc43-4f90-8e1a-d2530f29061f
+		sourceLineageTag: provider_key
+		summarizeBy: none
+		sourceColumn: provider_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_status_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 830ca66b-1755-404b-8cc0-8df121d81772
+		sourceLineageTag: policy_status_key
+		summarizeBy: none
+		sourceColumn: policy_status_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column written_premium_amount
+		dataType: double
+		lineageTag: 41bbf039-366e-4f28-a112-37d6834a45fc
+		sourceLineageTag: written_premium_amount
+		summarizeBy: sum
+		sourceColumn: written_premium_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column quoted_premium_amount
+		dataType: double
+		lineageTag: 90a404ea-8702-4e68-9455-950b0e571f24
+		sourceLineageTag: quoted_premium_amount
+		summarizeBy: sum
+		sourceColumn: quoted_premium_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column premium_variance_amount
+		dataType: double
+		lineageTag: 063e6ece-178b-4abb-9d3f-2c3f2594956f
+		sourceLineageTag: premium_variance_amount
+		summarizeBy: sum
+		sourceColumn: premium_variance_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column is_in_force
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: ad300ddf-ae23-4a34-8a3e-9175a27c51d6
+		sourceLineageTag: is_in_force
+		summarizeBy: none
+		sourceColumn: is_in_force
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_term_days
+		dataType: int64
+		formatString: 0
+		lineageTag: 4653dced-b66e-4a36-a3d9-a8428ac9b93c
+		sourceLineageTag: policy_term_days
+		summarizeBy: sum
+		sourceColumn: policy_term_days
+
+		annotation SummarizationSetBy = Automatic
+
+	column fact_policy_key
+		dataType: int64
+		formatString: 0
+		lineageTag: 25d27c86-1350-49e2-bc8b-4a67a1e15aaa
+		sourceLineageTag: fact_policy_key
+		summarizeBy: sum
+		sourceColumn: fact_policy_key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_policy = entity
+		mode: directLake
+		source
+			entityName: fact_policy
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

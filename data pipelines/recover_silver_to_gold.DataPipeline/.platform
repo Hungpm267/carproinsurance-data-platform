@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "DataPipeline",
+    "displayName": "recover_silver_to_gold"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "15bc7fcc-3148-b83b-4106-06b29cc66d99"
+  }
+}

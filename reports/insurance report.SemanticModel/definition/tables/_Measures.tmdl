@@ -1,0 +1,1601 @@
+table _Measures
+	lineageTag: 2751e9d1-8f6b-4d1f-b7d5-682466faf636
+
+	measure 'Total Quotation' = COUNTROWS(fact_quotation)
+		formatString: 0
+		lineageTag: 8f07f964-461a-428c-9681-696d3ce90c5e
+
+	measure 'Total Premium' = SUM(fact_policy[written_premium_amount])
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 2a447454-4dd8-44d3-ad2a-cb6d038f4df5
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	measure 'Converted Quotations' =
+			
+			CALCULATE(
+			    COUNTROWS(fact_quotation),
+			    dim_quotation_status[quotation_status_name] = "CONVERTED"
+			)
+		formatString: 0
+		lineageTag: ea58ade7-b16d-4187-a543-7fd1665def0a
+
+	measure 'Conversion Rate' = DIVIDE([Converted Quotations], [Total Quotation])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 08bf5271-cc75-4fc7-97b1-b429ada7c6cc
+
+	measure 'Policies Issued' = COUNTROWS(fact_policy)
+		formatString: 0
+		lineageTag: 6613f769-a730-4e1c-b8ff-0692ca709fe6
+
+	measure 'Active Policies' =
+			
+			CALCULATE(
+			    COUNTROWS(fact_policy),
+			    fact_policy[is_in_force] = TRUE()
+			)
+		formatString: 0
+		lineageTag: 9c812c0a-aa38-4b54-ba75-7aba90d687b7
+
+	measure 'Cancelled Policies' =
+			
+			CALCULATE(
+			    COUNTROWS(fact_policy),
+			    dim_policy_status[policy_status_name] = "CANCELLED"
+			)
+		formatString: 0
+		lineageTag: 59985790-4822-4b2b-b7e5-713e4d216656
+
+	measure 'Cancellation Count' = COUNTROWS(fact_cancellation)
+		formatString: 0
+		lineageTag: 828ac351-a2c9-452d-bdf6-0b921622a1ba
+
+	measure 'Total Refund' = SUM(fact_cancellation[refund_amount])
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: f93c05b9-6427-4284-af2c-33eb9e23bb73
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	measure 'Total Quotation Prev' =
+			
+			CALCULATE(
+			    [Total Quotation],
+			    DATEADD(dim_date[full_date], -1, MONTH)
+			)
+		formatString: 0
+		lineageTag: a532f9ed-beca-4287-8948-ddb45510fbc7
+
+	measure 'Quotation Growth' =
+			
+			DIVIDE(
+			    [Total Quotation] - [Total Quotation Prev],
+			    [Total Quotation Prev],
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 5f8cf3df-0ebf-4a18-8750-c6453479e80b
+
+	measure 'Accepted Quotations' =
+			
+			CALCULATE(
+			    COUNTROWS(fact_quotation),
+			    dim_quotation_status[quotation_status_name] = "ACCEPTED"
+			)
+		formatString: 0
+		lineageTag: bf6639cf-1547-41f9-89c2-18e28a73f53f
+
+	measure 'Total Premium Prev' =
+			
+			CALCULATE(
+			    [Total Premium],
+			    DATEADD(dim_date[full_date], -1, MONTH)
+			)
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 89fa3444-bc01-4299-8691-900e6a3e350b
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	measure 'Premium Growth' =
+			
+			DIVIDE(
+			    [Total Premium] - [Total Premium Prev],
+			    [Total Premium Prev],
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 60ebc815-1c89-435f-802b-712c42a357e2
+
+	measure 'Policies Issued Prev' =
+			
+			CALCULATE(
+			    [Policies Issued],
+			    DATEADD(dim_date[full_date], -1, MONTH)
+			)
+		formatString: 0
+		lineageTag: ac392ee8-4e3d-4e85-8912-0f799a2323c7
+
+	measure 'Policies Issued Growth' =
+			
+			DIVIDE(
+			    [Policies Issued] - [Policies Issued Prev],
+			    [Policies Issued Prev],
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 37b889f1-0174-4cb6-b237-586aa152bad4
+
+	measure 'Conversion Rate Prev' =
+			
+			CALCULATE(
+			    [Conversion Rate],
+			    DATEADD(dim_date[full_date], -1, MONTH)
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: cc670b2b-385d-4537-a0c1-4b93c8b82fa7
+
+	measure 'Conversion Rate Change' = [Conversion Rate] - [Conversion Rate Prev]
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: e34c988a-4cc3-48b0-8995-d6ba7f46b7a6
+
+	measure 'Amount Collected' =
+			
+			CALCULATE(
+			    SUM(fact_payment[payment_amount]),
+			    fact_payment[is_successful_payment] = TRUE
+			)
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: a9d90029-fa86-48c5-9204-67ea3f19c803
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	measure 'Amount Collected Prev' =
+			
+			CALCULATE(
+			    [Amount Collected],
+			    DATEADD(dim_date[full_date], -1, MONTH)
+			)
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 27aa31df-33ea-4e2c-97a8-7c3cdb068888
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	measure 'Amount Collected Growth' =
+			
+			DIVIDE(
+			    [Amount Collected] - [Amount Collected Prev],
+			    [Amount Collected Prev],
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: b72d6d29-6ed4-49ee-bb5c-51b61ea4f161
+
+	measure 'Total Collected Premium' =
+			
+			CALCULATE(
+			    SUM ( Fact_Payment[payment_amount] ),
+			    Fact_Payment[is_successful_payment] = TRUE(),
+			    USERELATIONSHIP( Dim_Date[date_key], Fact_Payment[payment_date_key] )
+			)
+		lineageTag: 8308c47d-eaa0-450b-93c7-af3cc3eec510
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Payment Success Rate' =
+			
+			VAR SuccessPayments =
+			    CALCULATE(
+			        SUM ( fact_payment[payment_amount] ),
+			        Fact_Payment[is_successful_payment] = TRUE(),
+			        USERELATIONSHIP( Dim_Date[date_key], Fact_Payment[payment_date_key] )
+			    )
+			VAR TotalPayments =
+			    CALCULATE(
+			        SUM ( fact_payment[payment_amount] ),
+			        USERELATIONSHIP( Dim_Date[date_key], Fact_Payment[payment_date_key] )
+			    )
+			RETURN
+			    DIVIDE ( SuccessPayments, TotalPayments, 0 )
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 87c4eaae-1470-47a0-b72e-d0466b2a6ee3
+
+	measure 'Total Transaction' = COUNTROWS(fact_payment)
+		formatString: 0
+		lineageTag: 69cc778a-6fbc-4c5c-b86c-724b40b558de
+
+	measure 'Total Transaction Prev' =
+			
+			CALCULATE(
+			    [Total Transaction],
+			    DATEADD(dim_date[full_date], -1, MONTH)
+			)
+		formatString: 0
+		lineageTag: 2180c889-cc54-4fec-987f-f1bf5b8f7b1d
+
+	measure 'Transaction Growth' =
+			
+			DIVIDE(
+			    [Total Transaction] - [Total Transaction Prev],
+			    [Total Transaction Prev],
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: bf640aa1-73a6-4504-a34a-3d238d3aa358
+
+	measure 'Policy Conversion Rate' =
+			
+			DIVIDE (
+			    CALCULATE (
+			        SUM ( fact_quotation[fact_quotation_key] ),
+			        dim_quotation_status[quotation_status_key] = 4
+			    ),
+			    SUM ( fact_quotation[fact_quotation_key] ),
+			    0
+			)
+		lineageTag: c3dcb732-9c57-46f3-ae8e-0cb3b8b4cdaf
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Failed Payment' =
+			
+			CALCULATE(
+			    COUNTROWS(fact_payment),
+			    dim_payment_status[payment_status_name] = "FAILED"
+			)
+		formatString: 0
+		lineageTag: ea4a98e9-5525-4238-9793-ac10bc71c4c7
+
+	measure 'Failed Payment Prev' =
+			
+			CALCULATE(
+			    [Failed Payment],
+			    DATEADD(dim_date[full_date], -1, MONTH)
+			)
+		formatString: 0
+		lineageTag: 81771ee5-4c33-430c-8938-4b2296f62eeb
+
+	measure 'Failed Payment Variance' =
+			
+			DIVIDE(
+			    [Failed Payment] - [Failed Payment Prev],
+			    [Failed Payment Prev],
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: a28faced-7e18-4f14-b53d-2d54375d757e
+
+	measure 'Policy Conversion Target' = 0.5
+		lineageTag: 8985d61e-9b58-4e0f-94af-6b80624d81eb
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Pending Payment' =
+			
+			CALCULATE(
+			    COUNTROWS(fact_payment),
+			    dim_payment_status[payment_status_name] = "PENDING"
+			)
+		formatString: 0
+		lineageTag: 2771071f-8c0b-44c9-a66d-02874fcdb4b8
+
+	measure 'Pending Payment Prev' =
+			
+			CALCULATE(
+			    [Pending Payment],
+			    DATEADD(dim_date[full_date], -1, MONTH)
+			)
+		formatString: 0
+		lineageTag: adc157ba-34a1-4bff-b16e-567bd81d0ed3
+
+	measure 'Pending Payment Variance' =
+			
+			DIVIDE(
+			    [Pending Payment] - [Pending Payment Prev],
+			    [Pending Payment Prev],
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: a63eb633-9827-4541-a82a-413d67223975
+
+	measure 'Cancellation Prev' =
+			
+			CALCULATE(
+			    [Cancellation Count],
+			    DATEADD(dim_date[full_date], -1, MONTH)
+			)
+		formatString: 0
+		lineageTag: 6276da37-7120-40e0-ae2a-f09864ec34ae
+
+	measure 'Cancellation Variance' =
+			
+			DIVIDE(
+			    [Cancellation Count] - [Cancellation Prev],
+			    [Cancellation Prev],
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 5ec3d81d-092f-42f0-a681-cf2aa27194bd
+
+	measure 'Total Refund Prev' =
+			
+			CALCULATE(
+			    [Total Refund],
+			    DATEADD(dim_date[full_date], -1, MONTH)
+			)
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 2f85bc9c-cd47-4049-b5d5-4cfd5df8755d
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	measure 'Refund Variance' =
+			
+			DIVIDE(
+			    [Total Refund] - [Total Refund Prev],
+			    [Total Refund Prev],
+			    0
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: c71d9a46-6748-4f9f-882c-33d968c4b740
+
+	measure 'Total Payment' = COUNTROWS(fact_payment)
+		formatString: 0
+		lineageTag: ec67ff29-dd0c-4157-95b3-3f058c00c391
+
+	measure 'Amount Collected Growth Display' =
+			
+			VAR Growth = [Amount Collected Growth]
+			RETURN
+			SWITCH(
+			    TRUE(),
+			    ISBLANK(Growth), "--",
+			    Growth > 0, FORMAT(Growth, "+0.00%") & " ▲",
+			    Growth < 0, FORMAT(Growth, "0.00%") & " ▼",
+			    FORMAT(Growth, "0.00%") & " ▶"
+			)
+		lineageTag: ed755162-1104-43c2-98de-6b517c82e79d
+
+	measure 'Transaction Growth Display' =
+			
+			VAR Growth = [Transaction Growth]
+			RETURN
+			SWITCH(
+			    TRUE(),
+			    ISBLANK(Growth), "--",
+			    Growth > 0, FORMAT(Growth, "+0.00%") & " ▲",
+			    Growth < 0, FORMAT(Growth, "0.00%") & " ▼",
+			    FORMAT(Growth, "0.00%") & " ▶"
+			)
+		lineageTag: 1f55be36-4c5c-43bf-bed4-33684ecdc087
+
+	measure 'Failed Payment Variance Display' =
+			
+			VAR _Variance = [Failed Payment Variance]
+			RETURN
+			SWITCH(
+			    TRUE(),
+			    ISBLANK(_Variance), "--",
+			    _Variance > 0, FORMAT(_Variance, "+0.00%") & " ▲",
+			    _Variance < 0, FORMAT(_Variance, "0.00%") & " ▼",
+			    FORMAT(_Variance, "0.00%") & " ▶"
+			)
+		lineageTag: f4797f97-18f8-4390-b868-55b635cf3def
+
+	measure 'Pending Payment Variance Display' =
+			
+			VAR _Variance = [Pending Payment Variance]
+			RETURN
+			SWITCH(
+			    TRUE(),
+			    ISBLANK(_Variance), "--",
+			    _Variance > 0, FORMAT(_Variance, "+0.00%") & " ▲",
+			    _Variance < 0, FORMAT(_Variance, "0.00%") & " ▼",
+			    FORMAT(_Variance, "0.00%") & " ▶"
+			)
+		lineageTag: bfe955d2-3119-42a5-b2f0-1881fd236077
+
+	measure 'Cancellation Variance Display' =
+			
+			VAR _Variance = [Cancellation Variance]
+			RETURN
+			SWITCH(
+			    TRUE(),
+			    ISBLANK(_Variance), "--",
+			    _Variance > 0, FORMAT(_Variance, "+0.00%") & " ▲",
+			    _Variance < 0, FORMAT(_Variance, "0.00%") & " ▼",
+			    FORMAT(_Variance, "0.00%") & " ▶"
+			)
+		lineageTag: 64b3452c-84d8-419c-b2fe-3b1e307abc82
+
+	measure 'Refund Variance Display' =
+			
+			VAR _Variance = [Refund Variance]
+			RETURN
+			SWITCH(
+			    TRUE(),
+			    ISBLANK(_Variance), "--",
+			    _Variance > 0, FORMAT(_Variance, "+0.00%") & " ▲",
+			    _Variance < 0, FORMAT(_Variance, "0.00%") & " ▼",
+			    FORMAT(_Variance, "0.00%") & " ▶"
+			)
+		lineageTag: 008f7d7e-7771-4ae1-b693-a3d194530ed2
+
+	measure 'Total Collected Premium PM' =
+			
+			CALCULATE (
+			    [Total Collected Premium],
+			    DATEADD ( dim_date[full_date], -1, MONTH )
+			)
+		lineageTag: 556e8437-dde0-4719-9206-8532040ddd87
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Active Policies PM' =
+			
+			CALCULATE (
+			    [Active Policies],
+			    DATEADD ( dim_date[full_date], -1, MONTH )
+			)
+		formatString: 0
+		lineageTag: b4b062d1-4212-454c-bb25-2729c74ed654
+
+	measure 'Policies Issued PM' =
+			
+			CALCULATE (
+			    [Policies Issued],
+			    DATEADD ( dim_date[full_date], -1, MONTH )
+			)
+		formatString: 0
+		lineageTag: 388ca2ba-ec15-416e-9f68-f52bd140c1b4
+
+	measure 'Cancelled Policies PM' =
+			
+			CALCULATE (
+			    [Cancelled Policies],
+			    DATEADD ( dim_date[full_date], -1, MONTH )
+			)
+		formatString: 0
+		lineageTag: 4e404a14-0325-4119-8611-b7dabe624526
+
+	measure 'Total Collected Premium MoM %' =
+			
+			VAR Cur  = [Total Collected Premium]
+			VAR Prev = [Total Collected Premium PM]
+			VAR Pct  = DIVIDE ( Cur - Prev, Prev, BLANK () )
+			VAR T    = 0.005   -- flat if within ±0.5%
+			RETURN
+			    IF (
+			        ISBLANK ( Prev ),
+			        BLANK (),
+			        IF (
+			            ABS ( Pct ) <= T,
+			            "▶ " & FORMAT ( 0, "0.0%" ),
+			            IF (
+			                Pct > 0,
+			                "▲ " & FORMAT ( Pct, "+0.0%;-0.0%" ),
+			                "▼ " & FORMAT ( ABS ( Pct ), "0.0%" )
+			            )
+			        )
+			    )
+		lineageTag: 88d9e15a-b5cc-4432-b3b3-7b040b51b36e
+
+	measure 'Active Policies MoM %' =
+			
+			VAR Cur  = [Active Policies]
+			VAR Prev = [Active Policies PM]
+			VAR Pct  = DIVIDE ( Cur - Prev, Prev, BLANK () )
+			VAR T    = 0.005
+			RETURN
+			    IF (
+			        ISBLANK ( Prev ), BLANK (),
+			        IF ( ABS ( Pct ) <= T, "▶ " & FORMAT ( 0, "0.0%" ),
+			            IF ( Pct > 0, "▲ " & FORMAT ( Pct, "+0.0%;-0.0%" ),
+			                "▼ " & FORMAT ( ABS ( Pct ), "0.0%" ) ) )
+			    )
+		lineageTag: c7ee94ef-efc5-4079-a849-27aeba39bab3
+
+	measure 'Policies Issued MoM %' =
+			
+			VAR Cur  = [Policies Issued]
+			VAR Prev = [Policies Issued PM]
+			VAR Pct  = DIVIDE ( Cur - Prev, Prev, BLANK () )
+			VAR T    = 0.005
+			RETURN
+			    IF (
+			        ISBLANK ( Prev ), BLANK (),
+			        IF ( ABS ( Pct ) <= T, "▶ " & FORMAT ( 0, "0.0%" ),
+			            IF ( Pct > 0, "▲ " & FORMAT ( Pct, "+0.0%;-0.0%" ),
+			                "▼ " & FORMAT ( ABS ( Pct ), "0.0%" ) ) )
+			    )
+		lineageTag: e669ae98-1916-468b-9d96-5d5a4bd8f43f
+
+	measure 'Cancelled Policies MoM %' =
+			
+			VAR Cur  = [Cancelled Policies]
+			VAR Prev = [Cancelled Policies PM]
+			VAR Pct  = DIVIDE ( Cur - Prev, Prev, BLANK () )
+			VAR T    = 0.005
+			RETURN
+			    IF (
+			        ISBLANK ( Prev ), BLANK (),
+			        IF ( ABS ( Pct ) <= T, "▶ " & FORMAT ( 0, "0.0%" ),
+			            IF ( Pct > 0, "▲ " & FORMAT ( Pct, "+0.0%;-0.0%" ),
+			                "▼ " & FORMAT ( ABS ( Pct ), "0.0%" ) ) )
+			    )
+		lineageTag: 3c9f2734-f989-4ed9-9a86-8b8049cfe197
+
+	measure 'Collection Trend' = ```
+			
+			VAR _SelectedYear = MAX(dim_date[year_number])
+			
+			VAR _ChartMonthNum = MAX(TrendMonthAxis[Month Number])
+			
+			RETURN
+			    CALCULATE(
+			        [Amount Collected],
+			        FILTER(
+			            ALL(dim_date), 
+			            VALUE(dim_date[year_number]) = _SelectedYear &&
+			            dim_date[month_number] = _ChartMonthNum
+			        )
+			    )
+			```
+		lineageTag: 7cc2c2dc-e8e6-4bdc-b99e-c5a1bf30814b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Refund Trend' = ```
+			
+			// VAR _SelectedYear = MAX(dim_date[year_number])
+			
+			// VAR _ChartMonthNum = MAX(TrendMonthAxis[Month Number])
+			
+			// RETURN
+			//     CALCULATE(
+			//         [Total Refund],
+			//         FILTER(
+			//             ALL(dim_date), 
+			//             VALUE(dim_date[year_number]) = _SelectedYear &&
+			//             dim_date[month_number] = _ChartMonthNum
+			//         )
+			//     )
+			VAR _SelectedYear = MAX(dim_date[year_number])
+			VAR _ChartMonthNum = MAX(TrendMonthAxis[Month Number])
+			VAR _Result =
+			    CALCULATE(
+			        [Total Refund],
+			        FILTER(
+			            ALL(dim_date),
+			            VALUE(dim_date[year_number]) = _SelectedYear &&
+			            dim_date[month_number] = _ChartMonthNum
+			        )
+			    )
+			RETURN
+			    _Result + 0
+			```
+		lineageTag: d2efbf8e-d278-4266-8157-91f6d864cf52
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Payment Success Target' = 0.6
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 80a0bc03-d5ca-41c1-a711-541d82a43091
+
+	measure 'Leading Region' =
+			
+			VAR _RegionSummary =
+			    SUMMARIZE(
+			        FILTER(dim_agent, dim_agent[is_current] = TRUE),
+			        dim_agent[region],
+			        "total_premium", CALCULATE(SUM(fact_policy[written_premium_amount]))
+			    )
+			VAR _TopRegion = TOPN(1, _RegionSummary, [total_premium], DESC)
+			RETURN
+			    MAXX(_TopRegion, dim_agent[region])
+		lineageTag: 20a36718-c1f1-4890-a6bd-f5663f1c5a55
+
+	measure 'Leading Region Prev' =
+			
+			VAR _PrevPremium =
+			    CALCULATE(
+			        SUM(fact_policy[written_premium_amount]),
+			        DATEADD(dim_date[full_date], -1, MONTH),
+			        FILTER(dim_agent, dim_agent[is_current] = TRUE)
+			    )
+			RETURN
+			    FORMAT(_PrevPremium, "$#,0.0M")
+		lineageTag: 11aeeef6-cf58-44b7-9a49-06d8af549409
+
+	measure 'Leading Region Growth Display' =
+			
+			VAR _Growth = [Leading Region Growth]
+			RETURN
+			SWITCH(
+			    TRUE(),
+			    ISBLANK(_Growth), "--",
+			    _Growth > 0, FORMAT(_Growth, "+0.00%") & " ▲",
+			    _Growth < 0, FORMAT(_Growth, "0.00%") & " ▼",
+			    FORMAT(_Growth, "0.00%") & " ▶"
+			)
+		lineageTag: 9a02f3a8-5310-457e-868f-1c724574bdcd
+
+	measure 'Leading Region Growth' =
+			
+			VAR _Curr =
+			    SUM(fact_policy[written_premium_amount])
+			VAR _Prev =
+			    CALCULATE(
+			        SUM(fact_policy[written_premium_amount]),
+			        DATEADD(dim_date[full_date], -1, MONTH)
+			    )
+			RETURN DIVIDE(_Curr - _Prev, _Prev, 0)
+		lineageTag: 85612bb8-e99f-4e1a-b242-2eae49cf57ac
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Best Conversion Region' =
+			
+			VAR _RegionRanked =
+			    SUMMARIZE(
+			        FILTER(dim_agent, dim_agent[is_current] = TRUE),
+			        dim_agent[region],
+			        "conv_rate", CALCULATE(
+			            DIVIDE(
+			                CALCULATE(
+			                    COUNTROWS(fact_quotation),
+			                    fact_quotation[quotation_id] IN VALUES(fact_policy[quotation_id])
+			                ),
+			                COUNTROWS(fact_quotation),
+			                0
+			            )
+			        )
+			    )
+			VAR _Top = TOPN(1, _RegionRanked, [conv_rate], DESC)
+			RETURN
+			    MAXX(_Top, dim_agent[region])
+		lineageTag: 142fc090-6cc7-4eb0-a687-a7f1b6c17d34
+
+	measure 'Best Conversion Region Prev' =
+			
+			VAR _Prev =
+			    CALCULATE(
+			        DIVIDE(
+			            CALCULATE(
+			                COUNTROWS(fact_quotation),
+			                fact_quotation[quotation_id] IN VALUES(fact_policy[quotation_id])
+			            ),
+			            COUNTROWS(fact_quotation),
+			            0
+			        ),
+			        DATEADD(dim_date[full_date], -1, MONTH)
+			    )
+			RETURN
+			    FORMAT(_Prev, "0.00%")
+		lineageTag: 6e053f60-a500-45e4-9b2b-a49b6321e13b
+
+	measure 'Best Conversion Region Growth' =
+			
+			VAR _Curr =
+			    DIVIDE(
+			        CALCULATE(
+			            COUNTROWS(fact_quotation),
+			            fact_quotation[quotation_id] IN VALUES(fact_policy[quotation_id])
+			        ),
+			        COUNTROWS(fact_quotation),
+			        0
+			    )
+			VAR _Prev =
+			    CALCULATE(
+			        DIVIDE(
+			            CALCULATE(
+			                COUNTROWS(fact_quotation),
+			                fact_quotation[quotation_id] IN VALUES(fact_policy[quotation_id])
+			            ),
+			            COUNTROWS(fact_quotation),
+			            0
+			        ),
+			        DATEADD(dim_date[full_date], -1, MONTH)
+			    )
+			RETURN DIVIDE(_Curr - _Prev, _Prev, 0)
+		lineageTag: 595e6dd7-1596-49a0-bf8e-1f425a624f18
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Best Conversion Region Growth Display' =
+			
+			VAR _Growth = [Best Conversion Region Growth]
+			RETURN
+			SWITCH(
+			    TRUE(),
+			    ISBLANK(_Growth), "--",
+			    _Growth > 0, FORMAT(_Growth, "+0.00%") & " ▲",
+			    _Growth < 0, FORMAT(_Growth, "0.00%") & " ▼",
+			    FORMAT(_Growth, "0.00%") & " ▶"
+			)
+		lineageTag: 13b21492-7e3c-4e00-843e-46c8e7bbc389
+
+	measure 'Highest Risk Branch' =
+			
+			VAR _BranchRanked =
+			    SUMMARIZE(
+			        FILTER(dim_agent, dim_agent[is_current] = TRUE),
+			        dim_agent[branch],
+			        "cancel_count", CALCULATE(COUNTROWS(fact_cancellation))
+			    )
+			VAR _Top = TOPN(1, _BranchRanked, [cancel_count], DESC)
+			RETURN
+			    MAXX(_Top, dim_agent[branch])
+		lineageTag: 974d8474-a6fe-44d9-aa7d-b096ee9bdc71
+
+	measure 'Highest Risk Branch Prev' =
+			
+			VAR _Prev =
+			    CALCULATE(
+			        COUNTROWS(fact_cancellation),
+			        DATEADD(dim_date[full_date], -1, MONTH),
+			        FILTER(dim_agent, dim_agent[is_current] = TRUE)
+			    )
+			RETURN
+			    FORMAT(_Prev, "#,0")
+		lineageTag: 6a27880b-9450-46fa-80d0-b7ebf6804b88
+
+	measure 'Highest Risk Branch Growth' =
+			
+			VAR _Curr = COUNTROWS(fact_cancellation)
+			VAR _Prev =
+			    CALCULATE(
+			        COUNTROWS(fact_cancellation),
+			        DATEADD(dim_date[full_date], -1, MONTH)
+			    )
+			RETURN DIVIDE(_Curr - _Prev, _Prev, 0)
+		lineageTag: ae948ef8-235d-4138-8f4b-631fd08a885d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Highest Risk Branch Growth Display' =
+			
+			VAR _Growth = [Highest Risk Branch Growth]
+			RETURN
+			SWITCH(
+			    TRUE(),
+			    ISBLANK(_Growth), "--",
+			    _Growth > 0, FORMAT(_Growth, "+0.00%") & " ▲",
+			    _Growth < 0, FORMAT(_Growth, "0.00%") & " ▼",
+			    FORMAT(_Growth, "0.00%") & " ▶"
+			)
+		lineageTag: 36ce8b2d-8e75-4bb0-9ff1-2e24f677fa08
+
+	measure 'Region Covered' =
+			
+			CALCULATE(
+			    DISTINCTCOUNT(dim_agent[region]),
+			    dim_agent[is_current] = TRUE,
+			    dim_agent[region] <> "UNKNOWN",
+			    dim_agent[agent_key] <> -1
+			)
+		formatString: 0
+		lineageTag: b2fe63f1-7ccd-4c4e-a400-1767d7d7e25e
+
+	measure 'Selected Year' =
+			
+			VAR YMKey = SELECTEDVALUE ( dim_date[year_month_sort_key] )   -- e.g. 202511
+			VAR YMStr = SELECTEDVALUE ( dim_date[year_month] )            -- e.g. 2025-11
+			RETURN
+			    COALESCE (
+			        IF ( NOT ISBLANK ( YMKey ), INT ( YMKey / 100 ), BLANK () ),
+			        IF ( NOT ISBLANK ( YMStr ), VALUE ( LEFT ( YMStr, 4 ) ), BLANK () ),
+			        SELECTEDVALUE ( dim_date[year_number] ),
+			        YEAR ( TODAY () )
+			    )
+		lineageTag: 87f7c8fa-2d64-4fee-9adf-e4b45123cf3d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Policies Issued Monthly' =
+			
+			VAR Y = [Selected Year]
+			VAR M = SELECTEDVALUE ( DimMonth[month_number] )
+			RETURN
+			    IF (
+			        ISBLANK ( M ),
+			        BLANK (),
+			        CALCULATE (
+			            [Policies Issued],
+			            REMOVEFILTERS (
+			                dim_date[year_month],
+			                dim_date[year_month_sort_key],
+			                dim_date[full_date],
+			                dim_date[month_number]
+			            ),
+			            dim_date[year_number] = Y,
+			            dim_date[month_number] = M
+			        )
+			    )
+		formatString: 0
+		lineageTag: 478eb094-feee-40c0-81f7-4c59dcfbb1aa
+
+	measure 'Cancelled Issued Monthly' =
+			
+			// VAR Y = [Selected Year]
+			// VAR M = SELECTEDVALUE ( DimMonth[month_number] )
+			// RETURN
+			//     IF (
+			//         ISBLANK ( M ),
+			//         BLANK (),
+			//         CALCULATE (
+			//             [Cancelled Policies],
+			//             REMOVEFILTERS (
+			//                 dim_date[year_month],
+			//                 dim_date[year_month_sort_key],
+			//                 dim_date[full_date],
+			//                 dim_date[month_number]
+			//             ),
+			//             USERELATIONSHIP ( dim_date[date_key], fact_cancellation[cancellation_date_key] ),
+			//             dim_date[year_number] = Y,
+			//             dim_date[month_number] = M
+			//         )
+			//     )
+			VAR Y = [Selected Year]
+			VAR M = SELECTEDVALUE ( DimMonth[month_number] )
+			VAR Result =
+			    CALCULATE (
+			        COUNTROWS ( fact_cancellation ),
+			        REMOVEFILTERS ( dim_date ),
+			        USERELATIONSHIP ( dim_date[date_key], fact_cancellation[cancellation_date_key] ),
+			        dim_date[year_number]  = Y,
+			        dim_date[month_number] = M
+			    )
+			RETURN
+			    IF ( ISBLANK ( M ), BLANK (), COALESCE ( Result, 0 ) )
+		formatString: 0
+		lineageTag: 9939795b-c6e3-415b-b981-b39461f0950f
+
+	measure 'Written Premium' =
+			
+			SUM ( fact_policy[written_premium_amount] )
+		lineageTag: 423a93ac-d319-46f1-9402-cf015a19ac1f
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Quoted Premium' =
+			
+			SUM ( fact_quotation[quotation_premium_amount] )
+		lineageTag: 8c80d76c-ad02-43e2-886f-3b2d0d424836
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Written Premium Monthly' =
+			
+			VAR Y = [Selected Year]
+			VAR M = SELECTEDVALUE ( DimMonth[month_number] )
+			RETURN
+			    IF (
+			        ISBLANK ( M ),
+			        BLANK (),
+			        CALCULATE (
+			            [Written Premium],
+			            REMOVEFILTERS (
+			                dim_date[year_month],
+			                dim_date[year_month_sort_key],
+			                dim_date[full_date],
+			                dim_date[month_number]
+			            ),
+			            dim_date[year_number] = Y,
+			            dim_date[month_number] = M
+			        )
+			    )
+		lineageTag: e45286ff-f8d0-4a7a-a7e8-361803495aca
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Quoted Premium Monthly' =
+			
+			VAR Y = [Selected Year]
+			VAR M = SELECTEDVALUE ( DimMonth[month_number] )
+			RETURN
+			    IF (
+			        ISBLANK ( M ),
+			        BLANK (),
+			        CALCULATE (
+			            [Quoted Premium],
+			            REMOVEFILTERS (
+			                dim_date[year_month],
+			                dim_date[year_month_sort_key],
+			                dim_date[full_date],
+			                dim_date[month_number]
+			            ),
+			            USERELATIONSHIP ( dim_date[date_key], fact_quotation[quotation_date_key] ),
+			            dim_date[year_number] = Y,
+			            dim_date[month_number] = M
+			        )
+			    )
+		lineageTag: 3ab5acef-b584-4119-954c-f4310e0a75cf
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Customers' =
+			
+			VAR AsOf = [Selected Period End]
+			RETURN
+			    CALCULATE (
+			        DISTINCTCOUNT ( dim_customer[customer_id] ),
+			        REMOVEFILTERS ( dim_date ),
+			        dim_customer[customer_since_date] <= AsOf
+			    )
+		formatString: 0
+		lineageTag: acec3c4f-006e-4226-a1a0-b14368922f4a
+
+	measure 'Total Insured Vehicles' =
+			
+			VAR AsOf = [Selected Period End]
+			RETURN
+			    CALCULATE (
+			        DISTINCTCOUNT ( fact_quotation[vehicle_key] ),
+			        REMOVEFILTERS ( dim_date ),
+			        dim_date[full_date] <= AsOf,
+			        NOT ISBLANK ( fact_quotation[vehicle_key] ),
+			        fact_quotation[vehicle_key] <> -1
+			    )
+		formatString: 0
+		lineageTag: 724e9e46-63b5-40c2-915e-f1e7f705f56a
+
+	measure 'Total Insured Value' =
+			
+			VAR AsOf = [Selected Period End]
+			RETURN
+			    SUMX (
+			        CALCULATETABLE (
+			            VALUES ( fact_quotation[vehicle_key] ),
+			            REMOVEFILTERS ( dim_date ),
+			            dim_date[full_date] <= AsOf,
+			            NOT ISBLANK ( fact_quotation[vehicle_key] ),
+			            fact_quotation[vehicle_key] <> -1
+			        ),
+			        CALCULATE ( MAX ( dim_vehicle[vehicle_value] ) )
+			    )
+		lineageTag: 0110d5c5-f110-47b6-b922-75e94d3b2b35
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Avg Vehicle Age' =
+			
+			CALCULATE (
+			    AVERAGE ( dim_vehicle[vehicle_age_years] ),
+			    fact_policy[is_in_force] = TRUE
+			)
+		lineageTag: b8ac1e86-49f6-4c33-a851-5e645bcb5a54
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Customers PM' =
+			
+			VAR AsOfPrev = EOMONTH ( EDATE ( [Selected Period End], -1 ), 0 )
+			RETURN
+			    CALCULATE (
+			        DISTINCTCOUNT ( dim_customer[customer_id] ),
+			        REMOVEFILTERS ( dim_date ),
+			        dim_customer[customer_since_date] <= AsOfPrev
+			    )
+		formatString: 0
+		lineageTag: 37c59c9b-4617-4a46-a280-a3d9cfe5312a
+
+	measure 'Total Customers MoM %' =
+			
+			VAR Cur  = [Total Customers]
+			VAR Prev = [Total Customers PM]
+			VAR Pct  = DIVIDE ( Cur - Prev, Prev, BLANK () )
+			VAR T    = 0.005
+			RETURN
+			    IF (
+			        ISBLANK ( Prev ), BLANK (),
+			        IF ( ABS ( Pct ) <= T, "▶ " & FORMAT ( 0, "0.0%" ),
+			            IF ( Pct > 0, "▲ " & FORMAT ( Pct, "+0.0%;-0.0%" ),
+			                "▼ " & FORMAT ( ABS ( Pct ), "0.0%" ) ) )
+			    )
+		lineageTag: 1141a9b8-6861-47dd-97d2-b533e5130702
+
+	measure 'Total Insured Vehicles PM' =
+			
+			VAR AsOfPrev = EOMONTH ( EDATE ( [Selected Period End], -1 ), 0 )
+			RETURN
+			    CALCULATE (
+			        DISTINCTCOUNT ( fact_quotation[vehicle_key] ),
+			        REMOVEFILTERS ( dim_date ),
+			        dim_date[full_date] <= AsOfPrev,
+			        NOT ISBLANK ( fact_quotation[vehicle_key] ),
+			        fact_quotation[vehicle_key] <> -1
+			    )
+		formatString: 0
+		lineageTag: e22e21f4-e534-46f8-8679-2af7285eca22
+
+	measure 'Total Insured Vehicles MoM %' =
+			
+			VAR Cur  = [Total Insured Vehicles]
+			VAR Prev = [Total Insured Vehicles PM]
+			VAR Pct  = DIVIDE ( Cur - Prev, Prev, BLANK () )
+			VAR T    = 0.005
+			RETURN
+			    IF (
+			        ISBLANK ( Prev ), BLANK (),
+			        IF ( ABS ( Pct ) <= T, "▶ " & FORMAT ( 0, "0.0%" ),
+			            IF ( Pct > 0, "▲ " & FORMAT ( Pct, "+0.0%;-0.0%" ),
+			                "▼ " & FORMAT ( ABS ( Pct ), "0.0%" ) ) )
+			    )
+		lineageTag: 87044397-ea2f-443b-ad8a-df83c08160a2
+
+	measure 'Total Insured Value PM' =
+			
+			VAR AsOfPrev = EOMONTH ( EDATE ( [Selected Period End], -1 ), 0 )
+			RETURN
+			    SUMX (
+			        CALCULATETABLE (
+			            VALUES ( fact_quotation[vehicle_key] ),
+			            REMOVEFILTERS ( dim_date ),
+			            dim_date[full_date] <= AsOfPrev,
+			            NOT ISBLANK ( fact_quotation[vehicle_key] ),
+			            fact_quotation[vehicle_key] <> -1
+			        ),
+			        CALCULATE ( MAX ( dim_vehicle[vehicle_value] ) )
+			    )
+		lineageTag: ebbca8c4-2393-47d9-90ae-29766465e97c
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Insured Value MoM %' = ```
+			
+			VAR Cur  = [Total Insured Value]
+			VAR Prev = [Total Insured Value PM]
+			VAR Pct  = DIVIDE ( Cur - Prev, Prev, BLANK () )
+			VAR T    = 0.005
+			RETURN
+			    IF (
+			        ISBLANK ( Prev ), BLANK (),
+			        IF ( ABS ( Pct ) <= T, "▶ " & FORMAT ( 0, "0.0%" ),
+			            IF ( Pct > 0, "▲ " & FORMAT ( Pct, "+0.0%;-0.0%" ),
+			                "▼ " & FORMAT ( ABS ( Pct ), "0.0%" ) ) )
+			    )
+			
+			```
+		lineageTag: 7a5b17fd-c081-4cf6-9505-27897c04aa5c
+
+	measure 'Regional Premium Trend' =
+			
+			VAR _SelectedYear = MAX(dim_date[year_number])
+			VAR _ChartMonthNum = MAX(TrendMonthAxis[Month Number])
+			RETURN
+			CALCULATE(
+			    SUM(fact_policy[written_premium_amount]),
+			    FILTER(
+			        ALL(dim_date),
+			        VALUE(dim_date[year_number]) = _SelectedYear &&
+			        dim_date[month_number] = _ChartMonthNum
+			    )
+			)
+		lineageTag: eab7b74c-834b-4784-8ed2-7a55fb4e7c2d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Selected Period End' =
+			
+			VAR YMKey = SELECTEDVALUE ( dim_date[year_month_sort_key] )   -- e.g. 202511
+			VAR Y     = INT ( YMKey / 100 )
+			VAR M     = MOD ( YMKey, 100 )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( YMKey ),
+			        EOMONTH ( DATE ( Y, M, 1 ), 0 ),
+			        EOMONTH ( MAX ( dim_customer[customer_since_date] ), 0 )  -- fallback if no slicer
+			    )
+		formatString: General Date
+		lineageTag: c76e6754-1c34-4863-b0e2-f56b81d97c8e
+
+	measure 'New Customers This Month' =
+			
+			[Total Customers] - [Total Customers PM]
+		formatString: 0
+		lineageTag: cbb905a7-7f4d-4e1c-9cd8-76edbdf7f479
+
+	measure 'Customer Count' =
+			
+			CALCULATE (
+			    DISTINCTCOUNT ( dim_customer[customer_id] ),
+			    dim_customer[is_current] = "true"
+			)
+		formatString: 0
+		lineageTag: 453deaf1-bed5-4867-979c-e91e23c9f709
+
+	measure 'Vehicle Count' =
+			
+			DISTINCTCOUNT ( dim_vehicle[vehicle_id] )
+		formatString: 0
+		lineageTag: 8a369366-2f64-4662-b207-e4426d76d92b
+
+	measure 'Customer Count (Selected Month)' =
+			
+			VAR AsOf = [Selected Period End]
+			RETURN
+			    CALCULATE (
+			        DISTINCTCOUNT ( dim_customer[customer_id] ),
+			        REMOVEFILTERS ( dim_date ),
+			        dim_customer[customer_since_date] <= AsOf,
+			        dim_customer[is_current]
+			    )
+		formatString: 0
+		lineageTag: 1d47ac3b-c73b-48bc-87eb-806b2a993556
+
+	measure 'Vehicle Count (Selected Month)' =
+			
+			VAR AsOf = [Selected Period End]
+			VAR InsuredKeys =
+			    DISTINCT (
+			        SELECTCOLUMNS (
+			            FILTER (
+			                ADDCOLUMNS (
+			                    fact_policy,
+			                    "@Issued",
+			                        LOOKUPVALUE (
+			                            dim_date[full_date],
+			                            dim_date[date_key],
+			                            fact_policy[issued_date_key]
+			                        ),
+			                    "@Veh",
+			                        LOOKUPVALUE (
+			                            fact_quotation[vehicle_key],
+			                            fact_quotation[quotation_id],
+			                            fact_policy[quotation_id]
+			                        )
+			                ),
+			                NOT ISBLANK ( [@Veh] )
+			                    && [@Veh] <> -1
+			                    && [@Issued] <= AsOf
+			            ),
+			            "VehicleKey", [@Veh]
+			        )
+			    )
+			RETURN
+			    COUNTROWS (
+			        FILTER (
+			            InsuredKeys,
+			            LOOKUPVALUE (
+			                dim_vehicle[vehicle_brand],
+			                dim_vehicle[vehicle_key],
+			                [VehicleKey]
+			            )
+			                = MAX ( dim_vehicle[vehicle_brand] )
+			        )
+			    )
+		formatString: 0
+		lineageTag: d97c71c2-aa99-4a57-9a51-0619520bab8e
+
+	measure 'Customers by Age Band (Selected Month)' =
+			
+			VAR AsOf  = [Selected Period End]
+			VAR Band  = SELECTEDVALUE ( DimAgeBand[age_band] )
+			VAR AgeMin =
+			    SWITCH (
+			        Band,
+			        "25-34", 25,
+			        "35-44", 35,
+			        "45-54", 45,
+			        "55+",   55,
+			        BLANK ()
+			    )
+			VAR AgeMax =
+			    SWITCH (
+			        Band,
+			        "25-34", 34,
+			        "35-44", 44,
+			        "45-54", 54,
+			        "55+",   150,
+			        BLANK ()
+			    )
+			RETURN
+			    IF (
+			        ISBLANK ( Band ),
+			        BLANK (),
+			        CALCULATE (
+			            DISTINCTCOUNT ( dim_customer[customer_id] ),
+			            REMOVEFILTERS ( dim_date ),
+			            dim_customer[customer_since_date] <= AsOf,
+			            dim_customer[is_current],
+			            NOT ISBLANK ( dim_customer[date_of_birth] ),
+			            FILTER (
+			                dim_customer,
+			                VAR Age = DATEDIFF ( dim_customer[date_of_birth], AsOf, YEAR )
+			                RETURN Age >= AgeMin && Age <= AgeMax
+			            )
+			        )
+			    )
+			// VAR AsOf        = [Selected Period End]
+			// VAR PeriodStart = DATE ( YEAR ( AsOf ), MONTH ( AsOf ), 1 )   -- đầu tháng được chọn
+			// VAR Band   = SELECTEDVALUE ( DimAgeBand[age_band] )
+			// VAR AgeMin =
+			//     SWITCH ( Band, "18-24", 18, "25-34", 25, "35-44", 35, "45-54", 45, "55+", 55, BLANK () )
+			// VAR AgeMax =
+			//     SWITCH ( Band, "18-24", 24, "25-34", 34, "35-44", 44, "45-54", 54, "55+", 150, BLANK () )
+			// RETURN
+			//     IF (
+			//         ISBLANK ( Band ) || ISBLANK ( AgeMin ),
+			//         BLANK (),
+			//         CALCULATE (
+			//             DISTINCTCOUNT ( dim_customer[customer_id] ),
+			//             REMOVEFILTERS ( dim_date ),
+			//             dim_customer[customer_since_date] >= PeriodStart,   -- cận dưới: đầu tháng
+			//             dim_customer[customer_since_date] <= AsOf,          -- cận trên: cuối tháng
+			//             dim_customer[is_current] = "true",
+			//             NOT ISBLANK ( dim_customer[date_of_birth] ),
+			//             FILTER (
+			//                 VALUES ( dim_customer[date_of_birth] ),
+			//                 VAR Age =
+			//                     DATEDIFF ( dim_customer[date_of_birth], AsOf, YEAR )
+			//                     - IF ( FORMAT ( AsOf, "MMDD" ) < FORMAT ( dim_customer[date_of_birth], "MMDD" ), 1, 0 )
+			//                 RETURN Age >= AgeMin && Age <= AgeMax
+			//             )
+			//         )
+			//     )
+		formatString: 0
+		lineageTag: 7cb7d3bb-115c-4b5d-9bd7-fb9cc4d289ef
+
+	measure 'Vehicle Count by Value Band (Selected Month)' =
+			
+			VAR AsOf  = [Selected Period End]
+			VAR Band  = SELECTEDVALUE ( dim_vehicle[vehicle_value_band] )
+			RETURN
+			    IF (
+			        ISBLANK ( Band ),
+			        BLANK (),
+			        COUNTROWS (
+			            DISTINCT (
+			                SELECTCOLUMNS (
+			                    FILTER (
+			                        ADDCOLUMNS (
+			                            fact_policy,
+			                            "@Issued",
+			                                LOOKUPVALUE (
+			                                    dim_date[full_date],
+			                                    dim_date[date_key],
+			                                    fact_policy[issued_date_key]
+			                                ),
+			                            "@Veh",
+			                                LOOKUPVALUE (
+			                                    fact_quotation[vehicle_key],
+			                                    fact_quotation[quotation_id],
+			                                    fact_policy[quotation_id]
+			                                )
+			                        ),
+			                        NOT ISBLANK ( [@Veh] )
+			                            && [@Veh] <> -1
+			                            && [@Issued] <= AsOf
+			                            && LOOKUPVALUE (
+			                                dim_vehicle[vehicle_value_band],
+			                                dim_vehicle[vehicle_key],
+			                                [@Veh]
+			                            ) = Band
+			                    ),
+			                    "VehicleKey", [@Veh]
+			                )
+			            )
+			        )
+			    )
+		formatString: 0
+		lineageTag: 25423567-87f1-4767-96bc-1d3be787aeaf
+
+	measure 'Vehicle Count by Mfg Year (Selected Month)' =
+			
+			VAR AsOf  = [Selected Period End]
+			VAR MfgYear = SELECTEDVALUE ( dim_vehicle[manufacture_year])
+			RETURN
+			    IF (
+			        ISBLANK ( MfgYear ),
+			        BLANK (),
+			        COUNTROWS (
+			            DISTINCT (
+			                SELECTCOLUMNS (
+			                    FILTER (
+			                        ADDCOLUMNS (
+			                            fact_policy,
+			                            "@Issued",
+			                                LOOKUPVALUE (
+			                                    dim_date[full_date],
+			                                    dim_date[date_key],
+			                                    fact_policy[issued_date_key]
+			                                ),
+			                            "@Veh",
+			                                LOOKUPVALUE (
+			                                    fact_quotation[vehicle_key],
+			                                    fact_quotation[quotation_id],
+			                                    fact_policy[quotation_id]
+			                                )
+			                        ),
+			                        NOT ISBLANK ( [@Veh] )
+			                            && [@Veh] <> -1
+			                            && [@Issued] <= AsOf
+			                            && LOOKUPVALUE (
+			                                dim_vehicle[manufacture_year],
+			                                dim_vehicle[vehicle_key],
+			                                [@Veh]
+			                            ) = MfgYear
+			                    ),
+			                    "VehicleKey", [@Veh]
+			                )
+			            )
+			        )
+			    )
+		formatString: 0
+		lineageTag: 7023ac21-8991-4961-ab8c-638c9f130bc8
+
+	measure Measure
+		lineageTag: 94855ff0-bfb8-488f-8428-957c861b0e6b
+
+		annotation 43dbc3e8-3a1c-4b6f-9923-b49ff7d6691c = True
+
+	measure 'Conversion Rate PrevMonth (Overview)' = ```
+			
+			VAR IsSingleMonth = HASONEVALUE('Dim_Date'[month_name]) && HASONEVALUE('Dim_Date'[year_number])
+			VAR PrevVal = 
+			    CALCULATE(
+			        [Conversion Rate],
+			        DATEADD('Dim_Date'[full_date], -1, MONTH)
+			    )
+			RETURN
+			    IF(IsSingleMonth && NOT ISBLANK(PrevVal), PrevVal, BLANK())
+			
+			```
+		lineageTag: 1e8a3d1d-86e5-4bb2-8bf6-73d723d10780
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Conversion Rate Growth % (Overview)' = ```
+			
+			VAR CurrentVal = [Conversion Rate]
+			VAR PrevVal = 
+			    CALCULATE(
+			        [Conversion Rate],
+			        DATEADD('Dim_Date'[full_date], -1, MONTH)
+			    )
+			RETURN
+			    DIVIDE(CurrentVal - PrevVal, PrevVal, BLANK())
+			
+			```
+		lineageTag: 9418fdae-d86d-4d94-9005-0d8c494d2392
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Conversion Rate Detail Text (Overview)' = ```
+			
+			VAR IsSingleMonth = HASONEVALUE('Dim_Date'[month_name]) && HASONEVALUE('Dim_Date'[year_number])
+			VAR Growth = [Conversion Rate Growth % (Overview)]
+			VAR FormatGrowth = FORMAT(Growth, "+0.00%;-0.00%;0.00%")
+			VAR Arrow = IF(Growth >= 0, " ▲", " ▼")
+			RETURN
+			    IF(
+			        IsSingleMonth && NOT ISBLANK(Growth),
+			        FormatGrowth & Arrow,
+			        BLANK()
+			    )
+			
+			```
+		lineageTag: f0867805-7365-4248-9209-7b0a2ab59641
+
+	measure 'Total Quotations PrevMonth (Overview)' = ```
+			
+			VAR IsSingleMonth = HASONEVALUE('Dim_Date'[month_name]) && HASONEVALUE('Dim_Date'[year_number])
+			VAR PrevVal = 
+			    CALCULATE(
+			        [Total Quotation],
+			        DATEADD('Dim_Date'[full_date], -1, MONTH)
+			    )
+			RETURN
+			    IF(IsSingleMonth && NOT ISBLANK(PrevVal), PrevVal, BLANK())
+			
+			```
+		formatString: 0
+		lineageTag: 75b46736-0700-4a15-ba6e-232bed60cdfb
+
+	measure 'Total Quotations Growth % (Overview)' = ```
+			
+			VAR CurrentVal = [Total Quotation]
+			VAR PrevVal = 
+			    CALCULATE(
+			        [Total Quotation],
+			        DATEADD('Dim_Date'[full_date], -1, MONTH)
+			    )
+			RETURN
+			    DIVIDE(CurrentVal - PrevVal, PrevVal, BLANK())
+			
+			```
+		lineageTag: e2dec843-993d-4eac-852a-cad732b5e9c8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Quotation Detail Text (Overview)' = ```
+			
+			VAR IsSingleMonth = HASONEVALUE('Dim_Date'[month_name]) && HASONEVALUE('Dim_Date'[year_number])
+			VAR Growth = [Total Quotations Growth % (Overview)]
+			VAR FormatGrowth = FORMAT(Growth, "+0.00%;-0.00%;0.00%")
+			VAR Arrow = IF(Growth >= 0, " ▲", " ▼")
+			RETURN
+			    IF(
+			        IsSingleMonth && NOT ISBLANK(Growth),
+			        FormatGrowth & Arrow,
+			        BLANK()
+			    )
+			
+			```
+		lineageTag: 5b0727e8-293e-486c-b543-29fa07780e26
+
+	measure 'Policies Issued (Line Chart)' = ```
+			
+			VAR SelectedYear = SELECTEDVALUE(dim_date[year_number])
+			VAR ChartMonthNum = MAX(TrendMonthAxis[Month Number])
+			RETURN
+			    IF(
+			        ISBLANK(SelectedYear),
+			        [Policies Issued],
+			        CALCULATE(
+			            [Policies Issued],
+			            FILTER(
+			            ALL(dim_date), 
+			            VALUE(dim_date[year_number]) = SelectedYear &&
+			            dim_date[month_number] = ChartMonthNum
+			        )
+			        )
+			    )
+			```
+		formatString: 0
+		lineageTag: 5fe5b5de-906a-48aa-96b0-da4915509fa2
+
+	measure 'Total Premium (Line Chart)' = ```
+			
+			VAR SelectedYear = SELECTEDVALUE(dim_date[year_number])
+			VAR ChartMonthNum = MAX(TrendMonthAxis[Month Number])
+			RETURN
+			    IF(
+			        ISBLANK(SelectedYear),
+			        [Total Premium],
+			        CALCULATE(
+			            [Total Premium],
+			            FILTER(
+			            ALL(dim_date), 
+			            VALUE(dim_date[year_number]) = SelectedYear &&
+			            dim_date[month_number] = ChartMonthNum
+			        )
+			        )
+			    )
+			```
+		lineageTag: 1a7668f3-9656-4579-b5d9-969a31894c6f
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Quotations PrevMonth' = ```
+			
+			VAR IsSingleMonth = HASONEVALUE('Dim_Date'[month_name]) && HASONEVALUE('Dim_Date'[year_number])
+			VAR PrevVal = 
+			    CALCULATE(
+			        [Total Quotation],
+			        DATEADD('Dim_Date'[full_date], -1, MONTH)
+			    )
+			RETURN
+			    // Chỉ trả về giá trị nếu người dùng lọc 1 tháng duy nhất
+			    IF(IsSingleMonth && NOT ISBLANK(PrevVal), PrevVal, BLANK())
+			
+			```
+		formatString: 0
+		lineageTag: ebb8fcb4-f0e1-43c0-956f-5554eae4c063
+
+	measure 'Total Premium PrevMonth' = ```
+			
+			VAR IsSingleMonth = HASONEVALUE('Dim_Date'[month_name]) && HASONEVALUE('Dim_Date'[year_number])
+			VAR PrevVal = 
+			    CALCULATE(
+			        [Total Premium],
+			        DATEADD('Dim_Date'[full_date], -1, MONTH)
+			    )
+			RETURN
+			    IF(IsSingleMonth && NOT ISBLANK(PrevVal), PrevVal, BLANK())
+			
+			```
+		lineageTag: d11c43d0-4548-4ee7-a855-287d3da073b6
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Measure 2'
+		lineageTag: 2a2a4948-8bc0-45e0-b284-606f3a9b3c62
+
+		annotation 43dbc3e8-3a1c-4b6f-9923-b49ff7d6691c = True
+
+	measure 'Refund Pay Out PrevMonth' = ```
+			
+			VAR IsSingleMonth = HASONEVALUE('dim_date'[month_name]) && HASONEVALUE('dim_date'[year_number])
+			VAR PrevVal = 
+			    CALCULATE(
+			        [Refund Pay Out],
+			        DATEADD('dim_date'[full_date], -1, MONTH)
+			    )
+			RETURN
+			    IF(IsSingleMonth && NOT ISBLANK(PrevVal), PrevVal, BLANK())
+			
+			```
+		lineageTag: 22c8ec58-de77-4e80-9c7b-fd693036b4c1
+
+	measure 'Refund Pay Out' = SUM('Fact_Cancellation'[refund_amount])
+		lineageTag: 1113726a-674f-428b-bd86-f71c7af81186
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Refund Pay Out Growth %' = ```
+			
+			VAR CurrentVal = [Refund Pay Out]
+			VAR PrevVal = 
+			    CALCULATE(
+			        [Refund Pay Out],
+			        DATEADD('dim_date'[full_date], -1, MONTH)
+			    )
+			RETURN
+			    DIVIDE(CurrentVal - PrevVal, PrevVal, BLANK())
+			
+			```
+		lineageTag: 5633ceb4-ed2a-4b8f-b748-28f84eff2dde
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Refund Pay Out Detail Text' = ```
+			
+			VAR IsSingleMonth = HASONEVALUE('dim_date'[month_name]) && HASONEVALUE('dim_date'[year_number])
+			VAR Growth = [Refund Pay Out Growth %]
+			VAR FormatGrowth = FORMAT(Growth, "+0.00%;-0.00%;0.00%")
+			VAR Arrow = IF(Growth >= 0, " ▲", " ▼")
+			RETURN
+			    IF(
+			        IsSingleMonth && NOT ISBLANK(Growth),
+			        FormatGrowth & Arrow,
+			        BLANK()
+			    )
+			
+			```
+		lineageTag: c299cee0-3316-419b-952e-080630fbbe3d
+
+	measure 'Funnel Value' = ```
+			
+			VAR CurrentStage = SELECTEDVALUE('Quotation_Funnel_Stages'[Stage])
+			RETURN
+			SWITCH(
+			    CurrentStage,
+			    "All Quoted", [Total Quotation],
+			    "Accepted", [Accepted Quotations],
+			    "Converted", CALCULATE(COUNTROWS('Fact_Quotation'), 'Dim_Quotation_Status'[quotation_status_name] = "CONVERTED"),
+			    BLANK()
+			)
+			
+			```
+		formatString: 0
+		lineageTag: 97b2ed4a-b3e0-4c2c-910e-593f36e9daae
+
+	measure 'Avg Premium' = ```
+			AVERAGE('Fact_Quotation'[quotation_premium_amount])
+			
+			```
+		lineageTag: 9c8016be-d83e-4fa8-91c1-7edc718d6c22
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Quotation Conversion Rate' =
+			
+			DIVIDE([Accepted Quotations], [Total Quotation], 0)
+		lineageTag: 6a7c22a4-6951-4d63-aac9-c49507dc974c
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column x
+		formatString: 0
+		lineageTag: 99cae787-b391-4bef-b862-b04eff49a28f
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [x]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Measures = calculated
+		mode: import
+		source = ROW("x", 1)
+
+	annotation PBI_Id = dee65bd1543442bebcedacd3bcbb1149
+

@@ -1,0 +1,205 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "Switch",
+        "typeProperties": {
+          "on": {
+            "value": "@string(pipeline().parameters.first_failed_stage_order)",
+            "type": "Expression"
+          },
+          "cases": [
+            {
+              "value": "1",
+              "activities": [
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {
+                      "root_folder": "landing",
+                      "default_watermark": "2026-05-25"
+                    },
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "99b34b15-1eb0-9804-4a38-b75c048c73c9",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Ingest_Policy_To_Bronze_1",
+                  "dependsOn": []
+                },
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {},
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "3c4fe38a-03d4-b916-45ec-34bddd84605a",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Bronze_To_Silver_1",
+                  "dependsOn": [
+                    {
+                      "activity": "Ingest_Policy_To_Bronze_1",
+                      "dependencyConditions": [
+                        "Succeeded"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {},
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "8041158f-a25c-9a74-44b6-d41fc1130890",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Silver_To_Gold_1",
+                  "dependsOn": [
+                    {
+                      "activity": "Bronze_To_Silver_1",
+                      "dependencyConditions": [
+                        "Succeeded"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "value": "2",
+              "activities": [
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {},
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "3c4fe38a-03d4-b916-45ec-34bddd84605a",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Bronze_To_Silver_2",
+                  "dependsOn": []
+                },
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {},
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "8041158f-a25c-9a74-44b6-d41fc1130890",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Silver_To_Gold_2",
+                  "dependsOn": [
+                    {
+                      "activity": "Bronze_To_Silver_2",
+                      "dependencyConditions": [
+                        "Succeeded"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "value": "3",
+              "activities": [
+                {
+                  "type": "InvokePipeline",
+                  "typeProperties": {
+                    "parameters": {},
+                    "waitOnCompletion": true,
+                    "workspaceId": "00000000-0000-0000-0000-000000000000",
+                    "pipelineId": "8041158f-a25c-9a74-44b6-d41fc1130890",
+                    "operationType": "InvokeFabricPipeline"
+                  },
+                  "externalReferences": {
+                    "connection": "eec51f9e-9a7c-4d36-bf81-f8c468630042"
+                  },
+                  "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureInput": false,
+                    "secureOutput": false
+                  },
+                  "name": "Silver_To_Gold_3",
+                  "dependsOn": []
+                }
+              ]
+            }
+          ],
+          "defaultActivities": []
+        },
+        "name": "Switch_Stage_Order",
+        "dependsOn": []
+      }
+    ],
+    "parameters": {
+      "first_failed_stage_order": {
+        "type": "string",
+        "defaultValue": "3"
+      },
+      "load_type": {
+        "type": "string",
+        "defaultValue": "INCREMENTAL"
+      },
+      "default_watermark": {
+        "type": "string",
+        "defaultValue": "1900-01-01T00:00:00Z"
+      }
+    }
+  }
+}

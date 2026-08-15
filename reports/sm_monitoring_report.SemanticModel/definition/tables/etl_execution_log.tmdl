@@ -1,0 +1,313 @@
+table etl_execution_log
+	lineageTag: 5a8dfba4-ca96-4b33-a99b-a7648564ab10
+	sourceLineageTag: [meta].[etl_execution_log]
+
+	measure 'Tables Running' =
+			
+			CALCULATE(
+			    COUNTROWS('etl_execution_log'),
+			    'etl_execution_log'[controller_id] <> 0,
+			    'etl_execution_log'[status] = "Running"
+			)
+		formatString: 0
+		lineageTag: bb1ea1ff-adab-4d56-a900-5d471041a6ae
+
+		changedProperty = Name
+
+		changedProperty = IsHidden
+
+	measure 'Success Rate %' =
+			
+			DIVIDE(
+			    [Pipelines Success],
+			    [Pipelines Success] + [Pipelines Failed],
+			    0
+			)
+		lineageTag: 001c3664-0da9-4944-b1a3-30e1edb4249d
+
+		changedProperty = Name
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Tables Failed' =
+			
+			CALCULATE(
+			    COUNTROWS('etl_execution_log'),
+			    'etl_execution_log'[controller_id] <> 0,
+			    'etl_execution_log'[status] = "Failed"
+			)
+		formatString: 0
+		lineageTag: a46c39ae-6b1d-4c38-a27a-5b453092a4ba
+
+		changedProperty = Name
+
+	measure 'Total Rows Inserted' = SUM('etl_execution_log'[rows_inserted])
+		formatString: 0
+		lineageTag: 679857e1-4ef7-4989-9fe3-dffbf22b28fb
+
+		changedProperty = Name
+
+	measure 'Total Rows Rejected' = SUM('etl_execution_log'[rows_rejected])
+		formatString: 0
+		lineageTag: 5908d937-ebbf-49e3-a624-7d2d8b7eafb5
+
+		changedProperty = Name
+
+	measure 'Total Rows Updated' = SUM('etl_execution_log'[rows_updated])
+		formatString: 0
+		lineageTag: 23593795-c0c3-42b1-a677-fa21db1d88e9
+
+		changedProperty = Name
+
+	measure 'Tables Success' =
+			
+			CALCULATE(
+			    COUNTROWS('etl_execution_log'),
+			    'etl_execution_log'[controller_id] <> 0,
+			    'etl_execution_log'[status] = "Success"
+			)
+		formatString: 0
+		lineageTag: ce5f55d7-c756-4eb2-94b4-76311a845070
+
+		changedProperty = Name
+
+	measure 'Avg Duration (min)' =
+			
+			AVERAGEX(
+			    FILTER(
+			        'etl_execution_log',
+			        'etl_execution_log'[controller_id] = 0
+			        && NOT ISBLANK('etl_execution_log'[end_time])
+			    ),
+			    DATEDIFF(
+			        'etl_execution_log'[start_time],
+			        'etl_execution_log'[end_time],
+			        MINUTE
+			    )
+			)
+		lineageTag: b9a1c526-a6b0-4ddf-9e2f-e010e855f709
+
+		changedProperty = Name
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Tables Cancelled' =
+			
+			CALCULATE(
+			    COUNTROWS('etl_execution_log'),
+			    'etl_execution_log'[controller_id] <> 0,
+			    'etl_execution_log'[status] = "Cancelled"
+			)
+		formatString: 0
+		lineageTag: 34816c3a-c233-470f-b46b-d0967019ccdc
+
+		changedProperty = Name
+
+	measure 'Pipelines Running' =
+			
+			CALCULATE(
+			    COUNTROWS('etl_execution_log'),
+			    'etl_execution_log'[controller_id] = 0,
+			    'etl_execution_log'[status] = "Running"
+			)
+		formatString: 0
+		lineageTag: cd780e5b-fc6e-460b-ad59-cb48c8e4b949
+
+		changedProperty = Name
+
+	measure 'Pipelines Success' =
+			
+			CALCULATE(
+			    COUNTROWS('etl_execution_log'),
+			    'etl_execution_log'[controller_id] = 0,
+			    'etl_execution_log'[status] = "Success"
+			)
+		formatString: 0
+		lineageTag: 64eb77c6-57b3-4a42-b891-440c3abb1228
+
+		changedProperty = Name
+
+	measure 'Pipelines Failed' =
+			
+			CALCULATE(
+			    COUNTROWS('etl_execution_log'),
+			    'etl_execution_log'[controller_id] = 0,
+			    'etl_execution_log'[status] = "Failed"
+			)
+		formatString: 0
+		lineageTag: 83fc6e9b-81dd-4aab-9cd1-b6b56e5178be
+
+		changedProperty = Name
+
+	measure 'Pipelines Cancellled' =
+			
+			CALCULATE(
+			    COUNTROWS('etl_execution_log'),
+			    'etl_execution_log'[controller_id] = 0,
+			    'etl_execution_log'[status] = "Cancelled"
+			)
+		formatString: 0
+		lineageTag: 563252cb-6eca-451f-8e6a-a331f2746506
+
+		changedProperty = Name
+
+	column log_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 49289de6-2786-4ec7-aed5-ea82a587eda4
+		sourceLineageTag: log_id
+		summarizeBy: sum
+		sourceColumn: log_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column pipeline_run_id
+		dataType: string
+		lineageTag: f5f0abd6-f8a9-4c90-8dd0-1183dab78cdc
+		sourceLineageTag: pipeline_run_id
+		summarizeBy: none
+		sourceColumn: pipeline_run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column controller_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 5233ecdc-6b9f-4c07-8652-b240712c1e4b
+		sourceLineageTag: controller_id
+		summarizeBy: sum
+		sourceColumn: controller_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column pipeline_name
+		dataType: string
+		lineageTag: 145f83ef-4ca3-483a-a475-8c3e6eb3f2b0
+		sourceLineageTag: pipeline_name
+		summarizeBy: none
+		sourceColumn: pipeline_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column start_time
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 33a60887-c8ad-4577-a6e1-c7bdb122a41f
+		sourceLineageTag: start_time
+		summarizeBy: none
+		sourceColumn: start_time
+
+		annotation SummarizationSetBy = Automatic
+
+	column end_time
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 88655226-29a3-4011-8db9-303eaf159c1d
+		sourceLineageTag: end_time
+		summarizeBy: none
+		sourceColumn: end_time
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: 3d6f30ad-9e92-47a0-9333-4ffbf3b3b2bc
+		sourceLineageTag: status
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column rows_read
+		dataType: int64
+		formatString: 0
+		lineageTag: 7448db1e-35f8-4b96-80c3-a3e45dbea0e8
+		sourceLineageTag: rows_read
+		summarizeBy: sum
+		sourceColumn: rows_read
+
+		annotation SummarizationSetBy = Automatic
+
+	column rows_inserted
+		dataType: int64
+		formatString: 0
+		lineageTag: fcaed805-9b21-4efb-bb04-2dc8914a73d4
+		sourceLineageTag: rows_inserted
+		summarizeBy: sum
+		sourceColumn: rows_inserted
+
+		annotation SummarizationSetBy = Automatic
+
+	column rows_updated
+		dataType: int64
+		formatString: 0
+		lineageTag: 34056c9d-4b0c-49ec-a2be-1b542c3d0ddf
+		sourceLineageTag: rows_updated
+		summarizeBy: sum
+		sourceColumn: rows_updated
+
+		annotation SummarizationSetBy = Automatic
+
+	column rows_rejected
+		dataType: int64
+		formatString: 0
+		lineageTag: 4814f8c0-daec-4e65-9d15-3b64f3b083a2
+		sourceLineageTag: rows_rejected
+		summarizeBy: sum
+		sourceColumn: rows_rejected
+
+		annotation SummarizationSetBy = Automatic
+
+	column watermark_from
+		dataType: string
+		lineageTag: 10242fe6-a7f4-4d49-bbaa-8be5f5dca87e
+		sourceLineageTag: watermark_from
+		summarizeBy: none
+		sourceColumn: watermark_from
+
+		annotation SummarizationSetBy = Automatic
+
+	column watermark_to
+		dataType: string
+		lineageTag: 55bef636-a66d-4a35-b178-f05401783e6b
+		sourceLineageTag: watermark_to
+		summarizeBy: none
+		sourceColumn: watermark_to
+
+		annotation SummarizationSetBy = Automatic
+
+	column dynamic_source_file
+		dataType: string
+		lineageTag: 82b99955-730c-4f00-a6d3-16d49941f3d7
+		sourceLineageTag: dynamic_source_file
+		summarizeBy: none
+		sourceColumn: dynamic_source_file
+
+		annotation SummarizationSetBy = Automatic
+
+	column error_message
+		dataType: string
+		lineageTag: 3af5ed0c-dc2d-49d1-86a9-2b72d6c6f6ca
+		sourceLineageTag: error_message
+		summarizeBy: none
+		sourceColumn: error_message
+
+		annotation SummarizationSetBy = Automatic
+
+	column logged_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 72f34351-c0ed-40c3-b356-6f2c31b72d3d
+		sourceLineageTag: logged_at
+		summarizeBy: none
+		sourceColumn: logged_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition etl_execution_log = entity
+		mode: directLake
+		source
+			entityName: etl_execution_log
+			schemaName: meta
+			expressionSource: 'DirectLake - insurance_warehouse'
+

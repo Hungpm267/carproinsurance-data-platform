@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "DataPipeline",
+    "displayName": "recover_ingest_crm_to_bronze"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "42c27642-31ab-b899-4af6-d9c7f51971d5"
+  }
+}

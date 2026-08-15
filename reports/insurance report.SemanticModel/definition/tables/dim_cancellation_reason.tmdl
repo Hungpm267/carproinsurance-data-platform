@@ -1,0 +1,30 @@
+table dim_cancellation_reason
+	lineageTag: 462eccab-abba-4391-bb87-e4561bf7792b
+	sourceLineageTag: [gold].[dim_cancellation_reason]
+
+	column cancellation_reason_key
+		dataType: int64
+		formatString: 0
+		lineageTag: a18040dc-9a59-45a4-90fc-b63f13f8ea26
+		sourceLineageTag: cancellation_reason_key
+		summarizeBy: none
+		sourceColumn: cancellation_reason_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column cancellation_reason_name
+		dataType: string
+		lineageTag: ca3e8351-528c-48bc-929d-d09648c371b6
+		sourceLineageTag: cancellation_reason_name
+		summarizeBy: none
+		sourceColumn: cancellation_reason_name
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_cancellation_reason = entity
+		mode: directLake
+		source
+			entityName: dim_cancellation_reason
+			schemaName: gold
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

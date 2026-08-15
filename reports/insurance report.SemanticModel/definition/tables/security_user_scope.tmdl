@@ -1,0 +1,56 @@
+table security_user_scope
+	lineageTag: 5e20a731-0a0a-4a57-ac5b-d1e51eeadb61
+	sourceLineageTag: [dbo].[security_user_scope]
+
+	column user_email
+		dataType: string
+		lineageTag: 844fbf93-64d2-48bf-b218-198ef5e15cbb
+		sourceLineageTag: user_email
+		summarizeBy: none
+		sourceColumn: user_email
+
+		annotation SummarizationSetBy = Automatic
+
+	column role_name
+		dataType: string
+		lineageTag: b6dd15a5-2ab2-49b8-948e-ffec28cfdbc3
+		sourceLineageTag: role_name
+		summarizeBy: none
+		sourceColumn: role_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_id
+		dataType: string
+		lineageTag: da135f1a-0c35-4122-a4f3-fecd2a0cbc10
+		sourceLineageTag: agent_id
+		summarizeBy: none
+		sourceColumn: agent_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column region_name
+		dataType: string
+		lineageTag: d07c8ee2-4aef-4974-9689-fe0666fc89dc
+		sourceLineageTag: region_name
+		summarizeBy: none
+		sourceColumn: region_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column branch_name
+		dataType: string
+		lineageTag: 4f772e59-f802-4f01-b149-dd1eca9517e9
+		sourceLineageTag: branch_name
+		summarizeBy: none
+		sourceColumn: branch_name
+
+		annotation SummarizationSetBy = Automatic
+
+	partition security_user_scope = entity
+		mode: directLake
+		source
+			entityName: security_user_scope
+			schemaName: dbo
+			expressionSource: 'DirectLake - insurance_lakehouse'
+

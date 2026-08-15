@@ -1,0 +1,13 @@
+role SG-Insurance-Agent
+	modelPermission: read
+
+	tablePermission dim_agent =
+			dim_agent[agent_id]
+			=
+			LOOKUPVALUE(
+			    security_user_scope[agent_id],
+			    security_user_scope[user_email], USERPRINCIPALNAME()
+			)
+
+	annotation PBI_Id = c3eaf04d4f9642a683513074b63d2871
+
